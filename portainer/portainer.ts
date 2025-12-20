@@ -1,6 +1,6 @@
 
-import { PortainerAuth } from './auth';
-import { PortainerEnvironment } from './interfaces';
+import { PortainerAuth } from './auth.ts';
+import { type PortainerEnvironment } from './interfaces.ts';
 /**
  * Portainer API Client
  * 
@@ -63,6 +63,25 @@ export class PortainerApiClient extends PortainerAuth {
         } catch (error) {
             console.error('Failed to fetch environments:', error);
             throw error; // Re-throw to allow upstream handling
+        }
+    }
+
+    /**
+     * Tests the connection to the Portainer API by fetching system status.
+     * @returns {Promise<boolean>} A promise that resolves to true if the connection is successful.
+     */
+    async testConnection(): Promise<boolean> {
+        try {
+            if (!this.isValidated) {
+                throw new Error('Authentication not validated. Cannot test connection.');
+            }
+
+            await this.axiosInstance.get('/api/system/status');
+            console.log('Successfully connected to Portainer API.');
+            return true;
+        } catch (error) {
+            console.error('Failed to connect to Portainer API:', error);
+            return false;
         }
     }
 }

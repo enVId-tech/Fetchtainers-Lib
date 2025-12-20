@@ -1,6 +1,6 @@
 // For interfacing with the backend API
 import dotenv from 'dotenv';
-import { PortainerApiClient } from './portainer/portainer';
+import { PortainerApiClient } from './portainer/portainer.ts';
 
 if (!process.env.PORTAINER_URL) {
     // Suppress console output during dotenv configuration
@@ -16,7 +16,7 @@ if (!process.env.PORTAINER_URL) {
     console.info = originalConsoleInfo;
 }
 
-function main() {
+async function main() {
     console.log('Portainer URL from environment:', process.env.PORTAINER_URL);
     console.log('Portainer API Token from environment:', process.env.PORTAINER_API_TOKEN ? '***' : 'Not Set');
 
@@ -26,6 +26,8 @@ function main() {
     )
 
     console.log('Environment ID from PortainerAuth:', portainerClient.DefaultEnvironmentId);
+    console.log('PortainerAuth isValidated:', (portainerClient as any).isValidated);
+    console.log('Is Connected: ', await portainerClient.testConnection());
 }
 
-main();
+await main();
