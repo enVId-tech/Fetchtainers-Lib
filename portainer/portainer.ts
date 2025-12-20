@@ -28,7 +28,7 @@ export class PortainerApiClient extends PortainerAuth {
             this._environmentIdValidated = false; // Reset validation when changed
         }
     }
-    
+
     /**
      * Fetches details of a specific Portainer environment.
      * @param environmentId - The ID of the environment to fetch.
@@ -36,11 +36,33 @@ export class PortainerApiClient extends PortainerAuth {
      */
     async getEnvironment(environmentId: number): Promise<PortainerEnvironment> {
         try {
+            if (!this.isValidated) {
+                throw new Error('Authentication not validated. Cannot fetch environment.');
+            }
+
             const response = await this.axiosInstance.get<PortainerEnvironment>(`/api/endpoints/${environmentId}`);
             return response.data;
         } catch (error) {
             console.error(`Failed to fetch environment ${environmentId}:`, error);
             throw error;
+        }
+    }
+
+    /**
+     * Fetches a list of all Portainer environments (endpoints).
+     * @returns {Promise<PortainerEnvironment[]>} A promise that resolves to an array of environment objects.
+     */
+    async getEnvironments(): Promise<PortainerEnvironment[]> {
+        try {
+            if (!this.isValidated) {
+                throw new Error('Authentication not validated. Cannot fetch environments.');
+            }
+
+            const response = await this.axiosInstance.get<PortainerEnvironment[]>('/api/endpoints');
+            return response.data;
+        } catch (error) {
+            console.error('Failed to fetch environments:', error);
+            throw error; // Re-throw to allow upstream handling
         }
     }
 }

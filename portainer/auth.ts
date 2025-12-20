@@ -2,8 +2,9 @@ import axios, { AxiosInstance } from 'axios';
 import https from 'https';
 
 export class PortainerAuth {
-    private portainerUrl: string; // Portainer URL, must be defined
-    private apiToken: string; // Access token, must be defined for API calls
+    protected portainerUrl: string; // Portainer URL, must be defined
+    protected apiToken: string; // Access token, must be defined for API calls
+    protected isValidated: boolean; // Indicates if authentication has been validated
     public axiosInstance: AxiosInstance;
 
     /**
@@ -17,6 +18,7 @@ export class PortainerAuth {
     ) {
         this.portainerUrl = portainerUrl;
         this.apiToken = apiToken;
+        this.isValidated = false;
 
         // Create an Axios instance with default configurations
         this.axiosInstance = axios.create({
@@ -71,6 +73,7 @@ export class PortainerAuth {
 
     private updateAuthHeaders() {
         this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${this.apiToken}`;
+        this.isValidated = true;
     }
 
     /**
