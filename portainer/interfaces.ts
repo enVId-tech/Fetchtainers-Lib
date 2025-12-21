@@ -51,3 +51,10 @@ export interface PortainerContainer {
         };
     };
 }
+
+export interface PortainerImage {
+    Id: string;
+    RepoTags: string[];
+    Created: number;
+    Size: number;
+}

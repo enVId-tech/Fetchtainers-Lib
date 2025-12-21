@@ -1,19 +1,19 @@
 
 import { PortainerAuth } from './auth.ts';
-import type { PortainerStack, PortainerEnvironment, PortainerContainer } from './interfaces.ts';
+import type { PortainerStack, PortainerEnvironment, PortainerContainer, PortainerImage } from './interfaces.ts';
 import { getFirstEnvironmentId } from './utils.ts';
 /**
  * Portainer API Client
  * 
  * Handles portainer API interactions.
  */
-class PortainerApiClient {
+class PortainerApiGetClient {
     private environmentId: number | null = null; // Environment ID, can be null on init but must be defined when used
     private _environmentIdValidated: boolean = false;
-    private auth: PortainerAuth;
+    public auth: PortainerAuth;
 
     constructor(
-        portainerUrl: string, 
+        portainerUrl: string,
         apiToken: string,
         environmentId: number | null = null
     ) {
@@ -74,10 +74,10 @@ class PortainerApiClient {
         }
     }
 
-        /**
-     * Fetches a list of all stacks managed by Portainer.
-     * @returns {Promise<PortainerStack[]>} A promise that resolves to an array of stack objects.
-     */
+    /**
+ * Fetches a list of all stacks managed by Portainer.
+ * @returns {Promise<PortainerStack[]>} A promise that resolves to an array of stack objects.
+ */
     async getStacks(): Promise<PortainerStack[]> {
         try {
             const response = await this.auth.axiosInstance.get<PortainerStack[]>('/api/stacks');
@@ -88,13 +88,13 @@ class PortainerApiClient {
         }
     }
 
-        /**
-     * Fetches a list of all containers within a specific Portainer environment.
-     * This proxies the Docker API's /containers/json endpoint.
-     * @param environmentId - The ID of the Portainer environment. Defaults to `this.defaultEnvironmentId`.
-     * @param includeAll - Whether to include all containers (running, stopped, etc.).
-     * @returns {Promise<PortainerContainer[]>} A promise that resolves to an array of container objects.
-     */
+    /**
+ * Fetches a list of all containers within a specific Portainer environment.
+ * This proxies the Docker API's /containers/json endpoint.
+ * @param environmentId - The ID of the Portainer environment. Defaults to `this.defaultEnvironmentId`.
+ * @param includeAll - Whether to include all containers (running, stopped, etc.).
+ * @returns {Promise<PortainerContainer[]>} A promise that resolves to an array of container objects.
+ */
     async getContainers(includeAll: boolean): Promise<PortainerContainer[] | undefined> {
         // If no environment ID is provided and no default is set, try to get the first one
         if (this.environmentId === null) {
@@ -105,7 +105,7 @@ class PortainerApiClient {
             }
             console.log(`Using environment ID: ${this.environmentId}`);
         }
-        
+
         try {
             const params = { all: includeAll };
             const response = await this.auth.axiosInstance.get<PortainerContainer[]>(`/api/endpoints/${this.environmentId}/docker/containers/json`, { params });
@@ -116,27 +116,46 @@ class PortainerApiClient {
     }
 
     /**
-     * Tests the connection to the Portainer API by fetching system status.
-     * @returns {Promise<boolean>} A promise that resolves to true if the connection is successful.
+     * Fetches detailed information about a specific container within a Portainer environment.
+     * @param containerId - The ID of the container to fetch details for.
+     * @param environmentId - The ID of the Portainer environment.
+     * @returns {Promise<PortainerContainer>} A promise that resolves to the container object.
      */
-    async testConnection(): Promise<boolean> {
+    async getContainerDetails(containerId: string, environmentId: number): Promise<PortainerContainer> {
+        if (!containerId) {
+            throw new Error('Container ID is required to fetch container details.');
+        }
         try {
-            if (!this.auth.isValidated) {
-                throw new Error('Authentication not validated. Cannot test connection.');
-            }
-
-            await this.auth.axiosInstance.get('/api/system/status');
-            console.log('Successfully connected to Portainer API.');
-            return true;
+            const response = await this.auth.axiosInstance.get<PortainerContainer>(`/api/endpoints/${environmentId}/docker/containers/${containerId}/json`);
+            return response.data;
         } catch (error) {
-            console.error('Failed to connect to Portainer API:', error);
-            return false;
+            console.error(`Failed to fetch details for container ${containerId} in environment ${environmentId}:`, error);
+            throw error;
+        }
+    }
+
+        /**
+     * Fetches a list of all Docker images within a specific Portainer environment.
+     * This proxies the Docker API's /images/json endpoint.
+     * @param environmentId - The ID of the Portainer environment.
+     * @returns {Promise<PortainerImage[]>} A promise that resolves to an array of image objects.
+     */
+    async getImages(environmentId: number): Promise<PortainerImage[]> {
+        if (environmentId === null) {
+            throw new Error('Environment ID is required to fetch images.');
+        }
+        try {
+            const response = await this.auth.axiosInstance.get<PortainerImage[]>(`/api/endpoints/${environmentId}/docker/images/json`);
+            return response.data;
+        } catch (error) {
+            console.error(`Failed to fetch images for environment ${environmentId}:`, error);
+            throw error;
         }
     }
 }
 
 // Create one instance to be used globally
-export const portainerClient = new PortainerApiClient(
+export const portainerClient = new PortainerApiGetClient(
     process.env.PORTAINER_URL || 'http://localhost:9000',
     process.env.PORTAINER_API_TOKEN || ''
 );

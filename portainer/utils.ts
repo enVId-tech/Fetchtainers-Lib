@@ -9,3 +9,22 @@ export async function getFirstEnvironmentId(): Promise<number | null> {
         return Promise.resolve(null);
     }
 }
+
+/**
+ * Tests the connection to the Portainer API by fetching system status.
+ * @returns {Promise<boolean>} A promise that resolves to true if the connection is successful.
+ */
+export async function testConnection(): Promise<boolean> {
+    try {
+        if (!portainerClient.auth.isValidated) {
+            throw new Error('Authentication not validated. Cannot test connection.');
+        }
+
+        await portainerClient.auth.axiosInstance.get('/api/system/status');
+        console.log('Successfully connected to Portainer API.');
+        return true;
+    } catch (error) {
+        console.error('Failed to connect to Portainer API:', error);
+        return false;
+    }
+}
