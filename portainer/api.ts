@@ -1,7 +1,7 @@
 
 import { PortainerAuth } from './auth.ts';
 import type { PortainerStack, PortainerEnvironment, PortainerContainer, PortainerImage } from './interfaces.ts';
-import { getFirstEnvironmentId } from './utils.ts';
+import { getFirstEnvironmentId, getStackByName } from './utils.ts';
 /**
  * Portainer API Client
  * 
@@ -26,7 +26,7 @@ class PortainerApiGetClient {
     /**
      * Gets the default environment ID.
      */
-    public get DefaultEnvironmentId(): number | null {
+    public get envId(): number | null {
         return this.environmentId;
     }
 
@@ -134,7 +134,7 @@ class PortainerApiGetClient {
         }
     }
 
-        /**
+    /**
      * Fetches a list of all Docker images within a specific Portainer environment.
      * This proxies the Docker API's /images/json endpoint.
      * @param environmentId - The ID of the Portainer environment.
@@ -161,6 +161,45 @@ class PortainerApiGetClient {
         } catch (error) {
             console.error('Failed to fetch system status:', error);
             throw error;
+        }
+    }
+}
+
+class PortainerFactory {
+    async createStack(stackData: Record<string, unknown>): Promise<Record<string, unknown>> {
+        if (portainerGetClient.envId === null) {
+            throw new Error('Environment ID is required to create a stack.');
+        }
+
+        const stackName = stackData.Name as string;
+        const composeContent = (stackData.ComposeFile || stackData.StackFileContent) as string;
+
+        if (!stackName || !composeContent) {
+            throw new Error('Stack name and compose content are required');
+        }
+
+        // Make sure the stack doesn't already exist
+        const existingStack = await getStackByName(stackName);
+        if (existingStack) {
+            console.warn(`Stack with name "${stackName}" already exists (ID: ${existingStack.Id}). Skipping creation.`);
+            return existingStack as unknown as Record<string, unknown>;
+        }
+
+        try {
+            const payload = {
+                Name: stackName,
+                StackFileContent: composeContent,
+                Env: stackData.Env || []
+            };
+
+            const response = await portainerGetClient.auth.axiosInstance.post(
+                `/api/stacks/create/standalone/string?endpointId=${portainerGetClient.envId}&type=2`,
+                payload
+            );
+            return response.data;
+        } catch (error) {
+            console.error('Failed to create stack:', error);
+            return {};
         }
     }
 }

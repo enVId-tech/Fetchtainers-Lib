@@ -59,3 +59,9 @@ export interface PortainerImage {
     Created: number;
     Size: number;
 }
+
+export interface PortainerStack {
+    Id: number;
+    Name: string;
+    EndpointId: number;
+}

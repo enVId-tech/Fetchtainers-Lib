@@ -20,7 +20,7 @@ async function main() {
     console.log('Portainer URL from environment:', process.env.PORTAINER_URL);
     console.log('Portainer API Token from environment:', process.env.PORTAINER_API_TOKEN ? '***' : 'Not Set');
 
-    console.log('Environment ID from PortainerAuth:', portainerGetClient.DefaultEnvironmentId);
+    console.log('Environment ID from PortainerAuth:', portainerGetClient.envId);
     console.log('PortainerAuth isValidated:', (portainerGetClient as any).isValidated);
     console.log('Is Connected: ', await portainerGetClient.getStatus());
     console.log(`Stacks: ${await portainerGetClient.getStacks()}`);
