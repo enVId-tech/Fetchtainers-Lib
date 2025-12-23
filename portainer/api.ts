@@ -24,8 +24,8 @@ if (!process.env.PORTAINER_URL) {
  * 
  * Handles portainer API interactions.
  */
-export class PortainerApiGetClient {
-    public static instance: PortainerApiGetClient;
+export class PortainerApi {
+    public static instance: PortainerApi;
     public auth: PortainerAuth;
 
     private environmentId: number | null = null; // Environment ID, can be null on init but must be defined when used
@@ -40,12 +40,12 @@ export class PortainerApiGetClient {
 
     public static getInstance(
         environmentId: number | null = null
-    ): PortainerApiGetClient {
-        if (!PortainerApiGetClient.instance) {
-            PortainerApiGetClient.instance = new PortainerApiGetClient(environmentId);
+    ): PortainerApi {
+        if (!PortainerApi.instance) {
+            PortainerApi.instance = new PortainerApi(environmentId);
         }
 
-        return PortainerApiGetClient.instance;
+        return PortainerApi.instance;
     }
 
     /**
@@ -135,12 +135,12 @@ export class PortainerApiGetClient {
     }
 
     /**
- * Fetches a list of all containers within a specific Portainer environment.
- * This proxies the Docker API's /containers/json endpoint.
- * @param environmentId - The ID of the Portainer environment. Defaults to `this.defaultEnvironmentId`.
- * @param includeAll - Whether to include all containers (running, stopped, etc.).
- * @returns {Promise<PortainerContainer[]>} A promise that resolves to an array of container objects.
- */
+     * Fetches a list of all containers within a specific Portainer environment.
+     * This proxies the Docker API's /containers/json endpoint.
+     * @param environmentId - The ID of the Portainer environment. Defaults to `this.defaultEnvironmentId`.
+     * @param includeAll - Whether to include all containers (running, stopped, etc.).
+     * @returns {Promise<PortainerContainer[]>} A promise that resolves to an array of container objects.
+     */
     async getContainers(includeAll: boolean): Promise<PortainerContainer[] | undefined> {
         // If no environment ID is provided and no default is set, try to get the first one
         if (this.environmentId === null) {
@@ -209,5 +209,38 @@ export class PortainerApiGetClient {
             throw error;
         }
     }
-}
 
+    /**
+     * Clean up any existing container with the same name
+     * @param containerName - The name of the container to clean up
+     * @param environmentId - The ID of the Portainer environment
+     */
+    async cleanupExistingContainer(containerName: string): Promise<void> {
+        try {
+            const containers = await this.getContainers(true);
+            if (!containers) {
+                console.error("No containers found, canceled cleanup operation.")
+                return
+            }
+            const existingContainer = containers.find(c =>
+                c.Names.some(name => name.includes(containerName)) ||
+                c.Names.some(name => name === `/${containerName}`)
+            );
+
+            if (existingContainer) {
+                console.log(`Cleaning up existing container "${containerName}" (ID: ${existingContainer.Id})`);
+
+                if (existingContainer.State === 'running') {
+                    await this.auth.axiosInstance.post(`/api/endpoints/${this.environmentId}/docker/containers/${existingContainer.Id}/stop`);
+                    console.log('Container stopped');
+                }
+
+                // Remove the container
+                await this.auth.axiosInstance.delete(`/api/endpoints/${this.environmentId}/docker/containers/${existingContainer.Id}`);
+                console.log('Container removed');
+            }
+        } catch (error) {
+            console.warn(`Warning: Failed to cleanup existing container "${containerName}":`, error);
+        }
+    }
+}

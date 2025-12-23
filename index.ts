@@ -1,9 +1,9 @@
 // For interfacing with the backend API
-import { PortainerApiGetClient } from './portainer/api.ts';
+import { PortainerApi } from './portainer/api.ts';
 import { PortainerFactory } from './portainer/factory.ts';
 
 async function main() {
-    const portainerGetClient = PortainerApiGetClient.getInstance(
+    const portainerGetClient = PortainerApi.getInstance(
         null
     );
 

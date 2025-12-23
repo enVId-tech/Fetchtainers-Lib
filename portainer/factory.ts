@@ -1,14 +1,14 @@
-import { PortainerApiGetClient } from "./api.ts";
-import { getStackByName, verifyStackCreation } from "./utils.ts";
+import { PortainerApi } from "./api.ts";
+import { getStackByName, verifyContainerCreation, verifyStackCreation } from "./utils.ts";
 
 export class PortainerFactory {
     public static instance: PortainerFactory;
-    private portainerClient: PortainerApiGetClient;
+    private portainerClient: PortainerApi;
 
     private constructor(
         environmentId: number | null = null
     ) {
-        this.portainerClient = PortainerApiGetClient.getInstance(environmentId);
+        this.portainerClient = PortainerApi.getInstance(environmentId);
     }
 
     public static getInstance(
@@ -90,7 +90,7 @@ export class PortainerFactory {
                     payload
                 );
 
-                console.log(`Stack created, waiting ${timeoutMs} milliseconds (${timeoutMs/1000} seconds) for verification.`)
+                console.log(`Stack created, waiting ${timeoutMs} milliseconds (${timeoutMs / 1000} seconds) for verification.`)
 
                 if (!await verifyStackCreation(stackName, timeoutMs)) {
                     console.warn(`Stack verification attempt ${i} / ${maxRetryCount} failed, retrying...`)
@@ -105,10 +105,76 @@ export class PortainerFactory {
         }
     }
 
-    async createContainer(stackData: Record<string, unknown>): Promise<Record<string, unknown>> {
+    /**
+ * Creates a stack based on a given compose format
+ * Valid for Portainer API >2.19.x
+ * @param stackData - An object containing stack creation data
+ * @param stackData.Name - The name of the stack, immutable after creation
+ * @param stackData.ContainerPayload - The Docker compose file as a single string, must be valid Docker notation
+ * @param stackData.Env - Optional: An array of objects with a string key and string value. Can be omitted if none are present.
+ * @param stackData.FromAppTemplate - Optional: Marks if current stack should be an app template.
+ * @param maxRetryCount - Optional: Number of times to retry making the stack if creation fails
+ * @param timeoutMs - Optional: Time between each retry attempt (in ms)
+ * @returns {Promise<Record<string, unknown>>} A promise that resolves to the created stack object or an empty object on failure.
+ */
+    async createContainer(stackData: Record<string, unknown>, maxRetryCount?: number, timeoutMs?: number): Promise<Record<string, unknown>> {
         const stackName = stackData.Name as string;
-        const composeContent = stackData.ComposeFile as string;
+        const composeContent = (stackData.ContainerPayload) as string;
         const serviceName = stackName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-        return {};        
+
+        if (!maxRetryCount) {
+            maxRetryCount = 3;
+        } else if (Math.floor(maxRetryCount) < 0) {
+            console.warn("Max retry count is an invalid number, setting to default value of 3.")
+            maxRetryCount = 3;
+        } else {
+            maxRetryCount = Math.floor(maxRetryCount);
+        }
+
+        if (!timeoutMs) {
+            timeoutMs = 5000;
+        } else if (Math.floor(timeoutMs) < 0) {
+            console.warn("timeoutMs is an invalid number, setting it to default value of 5000 ms.");
+            timeoutMs = 5000;
+        } else {
+            timeoutMs = Math.floor(timeoutMs);
+        }
+
+        // Clean up any existing container with the same name
+        await this.portainerClient.cleanupExistingContainer(serviceName);
+
+        for (let i = 0; i < maxRetryCount; i++) {
+            console.log('Creating container...');
+            const response = await this.portainerClient.auth.axiosInstance.post(
+                `/api/endpoints/${this.portainerClient.ensureEnvId()}/docker/containers/create?name=${serviceName}`,
+                composeContent
+            );
+
+            console.log('Container created successfully!');
+            const containerId = response.data.Id;
+
+            // Start the container
+            console.log('Starting container...');
+            await this.portainerClient.auth.axiosInstance.post(`/api/endpoints/${this.portainerClient.ensureEnvId()}/docker/containers/${containerId}/start`);
+
+            // Verify container creation
+            console.log(`Stack created, waiting ${timeoutMs} milliseconds (${timeoutMs / 1000} seconds) for verification.`)
+
+            if (!await verifyContainerCreation(serviceName, 10000)) {
+                console.warn(`Stack verification attempt ${i} / ${maxRetryCount} failed, retrying...`)
+            } else {
+                console.log('Container started and verified successfully!');
+                return {
+                    Id: containerId,
+                    Name: serviceName,
+                    method: 'direct-container',
+                    containerCreated: true,
+                    verified: true
+                };
+            }
+        }
+
+        console.error(`Container could not be verfied after ${maxRetryCount} attempts over ${maxRetryCount * timeoutMs}.`)
+        return {}
     }
 }
