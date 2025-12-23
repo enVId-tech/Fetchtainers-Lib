@@ -1,5 +1,5 @@
 import { PortainerApiGetClient } from "./api.ts";
-import { getStackByName } from "./utils.ts";
+import { getStackByName, verifyStackCreation } from "./utils.ts";
 
 export class PortainerFactory {
     public static instance: PortainerFactory;
@@ -28,11 +28,32 @@ export class PortainerFactory {
      * @param stackData.ComposeFile - The Docker compose file as a single string, must be valid Docker notation
      * @param stackData.Env - Optional: An array of objects with a string key and string value. Can be omitted if none are present.
      * @param stackData.FromAppTemplate - Optional: Marks if current stack should be an app template.
+     * @param maxRetryCount - Optional: Number of times to retry making the stack if creation fails
+     * @param timeoutMs - Optional: Time between each retry attempt (in ms)
      * @returns {Promise<Record<string, unknown>>} A promise that resolves to the created stack object or an empty object on failure.
      */
-    public async createStack(stackData: Record<string, unknown>): Promise<Record<string, unknown>> {
+    public async createStack(stackData: Record<string, unknown>, maxRetryCount?: number, timeoutMs?: number): Promise<Record<string, unknown>> {
         if (this.portainerClient.ensureEnvId() === null) {
             throw new Error('Environment ID is required to create a stack.');
+        }
+
+
+        if (!maxRetryCount) {
+            maxRetryCount = 3;
+        } else if (Math.floor(maxRetryCount) < 0) {
+            console.warn("Max retry count is an invalid number, setting to default value of 3.")
+            maxRetryCount = 3;
+        } else {
+            maxRetryCount = Math.floor(maxRetryCount);
+        }
+
+        if (!timeoutMs) {
+            timeoutMs = 5000;
+        } else if (Math.floor(timeoutMs) < 0) {
+            console.warn("timeoutMs is an invalid number, setting it to default value of 5000 ms.");
+            timeoutMs = 5000;
+        } else {
+            timeoutMs = Math.floor(timeoutMs);
         }
 
         const stackName = stackData.Name as string;
@@ -57,17 +78,27 @@ export class PortainerFactory {
         }
 
         try {
-            const payload = {
-                Name: stackName,
-                StackFileContent: composeContent,
-                Env: stackData.Env || []
-            };
+            for (let i = 0; i < maxRetryCount; i++) {
+                const payload = {
+                    Name: stackName,
+                    StackFileContent: composeContent,
+                    Env: stackData.Env || []
+                };
 
-            const response = await this.portainerClient.auth.axiosInstance.post(
-                `/api/stacks/create/standalone/string?endpointId=${envId}&type=2`,
-                payload
-            );
-            return response.data;
+                const response = await this.portainerClient.auth.axiosInstance.post(
+                    `/api/stacks/create/standalone/string?endpointId=${envId}&type=2`,
+                    payload
+                );
+
+                console.log(`Stack created, waiting ${timeoutMs} milliseconds (${timeoutMs/1000} seconds) for verification.`)
+
+                if (!await verifyStackCreation(stackName, timeoutMs)) {
+                    console.warn(`Stack verification attempt ${i} / ${maxRetryCount} failed, retrying...`)
+                } else {
+                    return response.data;
+                }
+            }
+            return {};
         } catch (error) {
             console.error('Failed to create stack:', error);
             return {};
