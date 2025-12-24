@@ -1,4 +1,4 @@
-import { logError } from "@/logger.ts";
+import { logError } from "../../logger.ts";
 import { Constructor, PortainerContainer, PortainerImage, PortainerStack } from "../types.ts";
 
 interface RFMixin {

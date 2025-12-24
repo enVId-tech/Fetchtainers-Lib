@@ -1,4 +1,4 @@
-import { logError, logInfo, logWarn } from "@/logger.ts";
+import { logError, logInfo, logWarn } from "../../logger.ts";
 import { Constructor, PortainerEnvironment } from "../types.ts";
 import { getFirstEnvironmentId } from "../utils.ts";
 

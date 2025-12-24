@@ -1,4 +1,4 @@
-import { logError, logInfo, logWarn } from "@/logger";
+import { logError, logInfo, logWarn } from "../../logger.ts";
 import { Constructor } from "../types.ts";
 import { getStackById, getStackByName } from "../utils.ts";
 
@@ -10,7 +10,7 @@ interface RDMixin {
     getContainers: (includeAll: boolean, environmentId?: number | null) => Promise<import("../types.ts").PortainerContainer[] | undefined>;
 }
 
-export function ResourceFetchingMixin<TBase extends Constructor<RDMixin>>(Base: TBase) {
+export function ResourceDeletionMixin<TBase extends Constructor<RDMixin>>(Base: TBase) {
     return class extends Base {
             /**
              * Clean up any existing container with the same name
