@@ -1,22 +1,27 @@
 // For interfacing with the backend API
-import { PortainerApi } from './portainer/api.ts';
-import { PortainerFactory } from './portainer/factory.ts';
+import { PortainerApi } from './src/api.ts';
+import { PortainerFactory } from './src/factory.ts';
+import { logInfo } from './logger.ts';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: './.env' });
 
 async function main() {
     const portainerGetClient = PortainerApi.getInstance(
         null
     );
 
-    console.log('Portainer URL from environment:', process.env.PORTAINER_URL);
-    console.log('Portainer API Token from environment:', process.env.PORTAINER_API_KEY ? '***' : 'Not Set');
 
-    console.log('Environment ID from PortainerAuth:', await portainerGetClient.ensureEnvId());
-    console.log('PortainerAuth isValidated:', await (portainerGetClient as any).auth.isValidated);
-    console.log('Is Connected: ', await portainerGetClient.getStatus());
-    // console.log(`Stacks: ${await portainerGetClient.getStacks()}`);
+    logInfo('Portainer URL from environment:', process.env.PORTAINER_URL);
+    logInfo('Portainer API Token from environment:', process.env.PORTAINER_API_KEY ? '***' : 'Not Set');
+
+    logInfo('Environment ID from PortainerAuth:', await portainerGetClient.ensureEnvId());
+    logInfo('PortainerAuth isValidated:', await (portainerGetClient as any).auth.isValidated);
+    logInfo('Is Connected: ', await portainerGetClient.getStatus());
+    // logInfo(`Stacks: ${await portainerGetClient.getStacks()}`);
 
 
-    console.log("Creating new stack:")
+    logInfo("Creating new stack:")
 
     const stackContent = `services:
   test2-minecraftserver:

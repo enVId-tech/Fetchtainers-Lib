@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from 'axios';
 import https from 'https';
-
+import { logError } from '../logger.ts';
 
 export class PortainerAuth {
     private static instance: PortainerAuth;
@@ -44,30 +44,30 @@ export class PortainerAuth {
                 const config = error.config;
                 const errorMessage = error.message || 'An unknown error occurred.';
 
-                console.error(`Portainer API Error: ${errorMessage}`);
+                logError(`Portainer API Error: ${errorMessage}`);
                 if (config) {
                     const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
-                    console.error(`Request: ${config.method?.toUpperCase()} ${fullUrl}`);
+                    logError(`Request: ${config.method?.toUpperCase()} ${fullUrl}`);
                 }
 
                 if (errorMessage.includes('Client sent an HTTP request to an HTTPS server')) {
-                    console.error('Hint: This error suggests a protocol mismatch. Your PORTAINER_URL in your .env file might be using "http://" when it should be "https://". Please verify the URL and protocol.');
+                    logError('Hint: This error suggests a protocol mismatch. Your PORTAINER_URL in your .env file might be using "http://" when it should be "https://". Please verify the URL and protocol.');
                 }
 
                 if (error.response) {
                     // The request was made and the server responded with a status code
                     // that falls out of the range of 2xx
-                    console.error(`Response Status: ${error.response.status}`);
-                    console.error('Response Data:', error.response.data);
+                    logError(`Response Status: ${error.response.status}`);
+                    logError('Response Data:', error.response.data);
                 } else if (error.request) {
                     // The request was made but no response was received
-                    console.error('No response received from Portainer. Check network connectivity, firewall rules, and if the Portainer instance is running at the specified URL.');
+                    logError('No response received from Portainer. Check network connectivity, firewall rules, and if the Portainer instance is running at the specified URL.');
                 } else {
                     // Something happened in setting up the request that triggered an Error
-                    console.error('An error occurred while setting up the request.');
+                    logError('An error occurred while setting up the request.');
                 }
 
-                // You can throw the error again to allow the caller to handle it
+                // Throw the error again to allow the caller to handle it
                 return Promise.reject(error);
             }
         );

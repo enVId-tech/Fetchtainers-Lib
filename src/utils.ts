@@ -1,16 +1,17 @@
 import { PortainerApi } from "./api.ts";
 import type { PortainerContainer } from "./interfaces.ts";
+import { logInfo, logWarn, logError } from "../logger.ts";
 
 export async function getFirstEnvironmentId(): Promise<number | null> {
     try {
         const environments = await PortainerApi.instance.getEnvironments();
         if (!environments || environments.length === 0) {
-            console.error('No environments found in the Portainer instance.');
+            logError('No environments found in the Portainer instance.');
             return null;
         }
         return environments.length > 0 ? environments[0].Id : null;
     } catch (error) {
-        console.error('Error getting first environment ID:', error);
+        logError('Error getting first environment ID:', error);
         return Promise.resolve(null);
     }
 }
@@ -26,7 +27,7 @@ export async function getContainerByName(containerName: string): Promise<Portain
         const containers = await PortainerApi.instance.getContainers(true);
 
         if (!containers) {
-            console.error('No containers found in the specified environment.');
+            logError('No containers found in the specified environment.');
             return null;
         }
 
@@ -38,7 +39,7 @@ export async function getContainerByName(containerName: string): Promise<Portain
 
         return container || null;
     } catch (error) {
-        console.error(`Failed to get container by name "${containerName}":`, error);
+        logError(`Failed to get container by name "${containerName}":`, error);
         return null;
     }
 }
@@ -52,14 +53,14 @@ export async function getContainerByDetails(
     criteria: { image?: string; label?: string }
 ): Promise<PortainerContainer | null> {
     if (!criteria.image && !criteria.label) {
-        console.error('At least one search criteria (image or label) must be provided.');
+        logError('At least one search criteria (image or label) must be provided.');
         return null;
     }
 
     try {
         const containers = await PortainerApi.instance.getContainers(true);
         if (!containers) {
-            console.error('No containers found in the specified environment.');
+            logError('No containers found in the specified environment.');
             return null;
         }
 
@@ -76,7 +77,7 @@ export async function getContainerByDetails(
 
         return container || null;
     } catch (error) {
-        console.error('Failed to get container by details:', error);
+        logError('Failed to get container by details:', error);
         return null;
     }
 }
@@ -90,13 +91,13 @@ export async function getStackByName(stackName: string): Promise<any | null> {
     try {
         const stacks = await PortainerApi.instance.getStacks();
         if (!stacks) {
-            console.error('No stacks found in the specified environment.');
+            logError('No stacks found in the specified environment.');
             return null;
         }
         const stack = stacks.find((s: any) => s.Name === stackName);
         return stack || null;
     } catch (error) {
-        console.error(`Failed to get stack by name "${stackName}":`, error);
+        logError(`Failed to get stack by name "${stackName}":`, error);
         return null;
     }
 }
@@ -105,13 +106,13 @@ export async function getStackById(stackid: number, environmentId: number) {
     try {
         const stacks = await PortainerApi.instance.getStacks();
         if (!stacks) {
-            console.error('No stacks found in the specified environment.');
+            logError('No stacks found in the specified environment.');
             return null;
         }
         const stack = stacks.find((s: any) => s.Id === stackid && s.EndpointId === environmentId);
         return stack || null;
     } catch (error) {
-        console.error(`Failed to get stack by id "${stackid}" and environmentId "${environmentId}":`, error);
+        logError(`Failed to get stack by id "${stackid}" and environmentId "${environmentId}":`, error);
         return null;
     }
 }
@@ -129,17 +130,17 @@ export async function verifyStackCreation(stackName: string, timeoutMs: number =
         try {
             const stack = await getStackByName(stackName);
             if (stack) {
-                console.log(`Stack "${stackName}" verified successfully`);
+                logInfo(`Stack "${stackName}" verified successfully`);
                 return true;
             }
         } catch (error) {
-            console.warn('Error during stack verification:', error);
+            logWarn('Error during stack verification:', error);
         }
 
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    console.warn(`Stack verification timed out for "${stackName}"`);
+    logWarn(`Stack verification timed out for "${stackName}"`);
     return false;
 }
 
@@ -157,17 +158,17 @@ export async function verifyContainerCreation(containerName: string, timeoutMs: 
             const container = await getContainerByName(containerName);
 
             if (container) {
-                console.log(`Container "${containerName}" verified successfully (State: ${container.State})`);
+                logInfo(`Container "${containerName}" verified successfully (State: ${container.State})`);
                 return true;
             }
         } catch (error) {
-            console.warn('Error during container verification:', error);
+            logWarn('Error during container verification:', error);
         }
 
         // Wait 1 second before retrying
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    console.warn(`Container verification timed out for "${containerName}"`);
+    logWarn(`Container verification timed out for "${containerName}"`);
     return false;
 }

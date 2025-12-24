@@ -1,5 +1,6 @@
 import { PortainerApi } from "./api.ts";
 import { getStackByName, verifyContainerCreation, verifyStackCreation } from "./utils.ts";
+import { logInfo, logWarn, logError } from "../logger.ts";
 
 export class PortainerFactory {
     public static instance: PortainerFactory;
@@ -41,16 +42,14 @@ export class PortainerFactory {
         if (!maxRetryCount) {
             maxRetryCount = 3;
         } else if (Math.floor(maxRetryCount) < 0) {
-            console.warn("Max retry count is an invalid number, setting to default value of 3.")
+            logWarn("Max retry count is an invalid number, setting to default value of 3.")
             maxRetryCount = 3;
         } else {
             maxRetryCount = Math.floor(maxRetryCount);
         }
 
-        if (!timeoutMs) {
-            timeoutMs = 5000;
-        } else if (Math.floor(timeoutMs) < 0) {
-            console.warn("timeoutMs is an invalid number, setting it to default value of 5000 ms.");
+        if (!timeoutMs || isNaN(timeoutMs) || Math.floor(timeoutMs) < 0) {
+            logWarn("timeoutMs is an invalid number, setting it to default value of 5000 ms.");
             timeoutMs = 5000;
         } else {
             timeoutMs = Math.floor(timeoutMs);
@@ -66,7 +65,7 @@ export class PortainerFactory {
         // Make sure the stack doesn't already exist
         const existingStack = await getStackByName(stackName);
         if (existingStack) {
-            console.warn(`Stack with name "${stackName}" already exists (ID: ${existingStack.Id}). Skipping creation.`);
+            logWarn(`Stack with name "${stackName}" already exists (ID: ${existingStack.Id}). Skipping creation.`);
             return existingStack as unknown as Record<string, unknown>;
         }
 
@@ -90,17 +89,17 @@ export class PortainerFactory {
                     payload
                 );
 
-                console.log(`Stack created, waiting ${timeoutMs} milliseconds (${timeoutMs / 1000} seconds) for verification.`)
+                logInfo(`Stack created, waiting ${timeoutMs} milliseconds (${timeoutMs / 1000} seconds) for verification.`)
 
                 if (!await verifyStackCreation(stackName, timeoutMs)) {
-                    console.warn(`Stack verification attempt ${i} / ${maxRetryCount} failed, retrying...`)
+                    logWarn(`Stack verification attempt ${i} / ${maxRetryCount} failed, retrying...`)
                 } else {
                     return response.data;
                 }
             }
             return {};
         } catch (error) {
-            console.error('Failed to create stack:', error);
+            logError('Failed to create stack:', error);
             return {};
         }
     }
@@ -123,7 +122,7 @@ export class PortainerFactory {
         if (!maxRetryCount) {
             maxRetryCount = 3;
         } else if (Math.floor(maxRetryCount) < 0) {
-            console.warn("Max retry count is an invalid number, setting to default value of 3.")
+            logWarn("Max retry count is an invalid number, setting to default value of 3.")
             maxRetryCount = 3;
         } else {
             maxRetryCount = Math.floor(maxRetryCount);
@@ -132,7 +131,7 @@ export class PortainerFactory {
         if (!timeoutMs) {
             timeoutMs = 5000;
         } else if (Math.floor(timeoutMs) < 0) {
-            console.warn("timeoutMs is an invalid number, setting it to default value of 5000 ms.");
+            logWarn("timeoutMs is an invalid number, setting it to default value of 5000 ms.");
             timeoutMs = 5000;
         } else {
             timeoutMs = Math.floor(timeoutMs);
@@ -142,26 +141,26 @@ export class PortainerFactory {
         await this.portainerClient.cleanupExistingContainer(serviceName);
 
         for (let i = 0; i < maxRetryCount; i++) {
-            console.log('Creating container...');
+            logInfo('Creating container...');
             const response = await this.portainerClient.auth.axiosInstance.post(
                 `/api/endpoints/${this.portainerClient.ensureEnvId()}/docker/containers/create?name=${serviceName}`,
                 composeContent
             );
 
-            console.log('Container created successfully!');
+            logInfo('Container created successfully!');
             const containerId = response.data.Id;
 
             // Start the container
-            console.log('Starting container...');
+            logInfo('Starting container...');
             await this.portainerClient.auth.axiosInstance.post(`/api/endpoints/${this.portainerClient.ensureEnvId()}/docker/containers/${containerId}/start`);
 
             // Verify container creation
-            console.log(`Stack created, waiting ${timeoutMs} milliseconds (${timeoutMs / 1000} seconds) for verification.`)
+            logInfo(`Stack created, waiting ${timeoutMs} milliseconds (${timeoutMs / 1000} seconds) for verification.`)
 
             if (!await verifyContainerCreation(serviceName, 10000)) {
-                console.warn(`Stack verification attempt ${i} / ${maxRetryCount} failed, retrying...`)
+                logWarn(`Stack verification attempt ${i} / ${maxRetryCount} failed, retrying...`)
             } else {
-                console.log('Container started and verified successfully!');
+                logInfo('Container started and verified successfully!');
                 return {
                     Id: containerId,
                     Name: serviceName,
@@ -172,7 +171,7 @@ export class PortainerFactory {
             }
         }
 
-        console.error(`Container could not be verfied after ${maxRetryCount} attempts over ${maxRetryCount * timeoutMs}.`)
+        logError(`Container could not be verfied after ${maxRetryCount} attempts over ${maxRetryCount * timeoutMs}.`)
         return {}
     }
 }

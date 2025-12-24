@@ -1,23 +1,7 @@
-
 import { PortainerAuth } from './auth.ts';
 import type { PortainerStack, PortainerEnvironment, PortainerContainer, PortainerImage } from './interfaces.ts';
 import { getFirstEnvironmentId, getStackById, getStackByName } from './utils.ts';
-import dotenv from 'dotenv';
-
-if (!process.env.PORTAINER_URL) {
-    // Suppress console output during dotenv configuration
-    const originalConsoleLog = console.log;
-    const originalConsoleInfo = console.info;
-    console.log = () => { };
-    console.info = () => { };
-
-    dotenv.config({ path: '.env', debug: false });
-
-    // Restore original console functions
-    console.log = originalConsoleLog;
-    console.info = originalConsoleInfo;
-}
-
+import { logInfo, logWarn, logError } from '../logger.ts';
 
 /**
  * Portainer API Client
@@ -69,11 +53,11 @@ export class PortainerApi {
      */
     public async ensureEnvId(): Promise<number | null> {
         if (this.environmentId === null) {
-            console.warn('Environment ID is not set, getting default environment ID.');
+            logWarn('Environment ID is not set, getting default environment ID.');
             const firstEnvId = getFirstEnvironmentId().then(id => {
                 if (id === null || id === undefined) {
-                    console.warn('No Portainer environments found.');
-                    console.error("ALERT: Any Portainer operations requiring an environment ID will fail until one is set.");
+                    logWarn('No Portainer environments found.');
+                    logError("ALERT: Any Portainer operations requiring an environment ID will fail until one is set.");
                     return;
                 }
                 return id;
@@ -106,7 +90,7 @@ export class PortainerApi {
             const response = await this.auth.axiosInstance.get<PortainerEnvironment>(`/api/endpoints/${this.environmentId}`);
             return response.data;
         } catch (error) {
-            console.error(`Failed to fetch environment ${this.environmentId}:`, error);
+            logError(`Failed to fetch environment ${this.environmentId}:`, error);
             return undefined;
         }
     }
@@ -123,11 +107,11 @@ export class PortainerApi {
 
             const response = await this.auth.axiosInstance.get<PortainerEnvironment[]>('/api/endpoints');
 
-            console.log(`Fetched ${response.data.length} environments from Portainer.`);
+            logInfo(`Fetched ${response.data.length} environments from Portainer.`);
 
             return response.data;
         } catch (error) {
-            console.error('Failed to fetch environments:', error);
+            logError('Failed to fetch environments:', error);
             return undefined;
         }
     }
@@ -141,7 +125,7 @@ export class PortainerApi {
             const response = await this.auth.axiosInstance.get<PortainerStack[]>('/api/stacks');
             return response.data;
         } catch (error) {
-            console.error('Failed to fetch stacks:', error);
+            logError('Failed to fetch stacks:', error);
             return undefined;
         }
     }
@@ -160,7 +144,7 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot fetch containers.');
+            logError('No Portainer environments found. Cannot fetch containers.');
             return undefined;
         }
 
@@ -185,19 +169,19 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot fetch container details.');
+            logError('No Portainer environments found. Cannot fetch container details.');
             return undefined;
         }
 
         if (!identifier) {
-            console.error('Container ID is required to fetch container details.');
+            logError('Container ID is required to fetch container details.');
             return undefined;
         }
 
         const containers = await this.getContainers(true, environmentId);
 
         if (!containers) {
-            console.error('No containers found in the specified environment.');
+            logError('No containers found in the specified environment.');
             return undefined;
         }
 
@@ -237,7 +221,7 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot fetch images.');
+            logError('No Portainer environments found. Cannot fetch images.');
             return undefined;
         }
 
@@ -245,7 +229,7 @@ export class PortainerApi {
             const response = await this.auth.axiosInstance.get<PortainerImage[]>(`/api/endpoints/${environmentId}/docker/images/json`);
             return response.data;
         } catch (error) {
-            console.error(`Failed to fetch images for environment ${environmentId}:`, error);
+            logError(`Failed to fetch images for environment ${environmentId}:`, error);
             return undefined;
         }
     }
@@ -255,7 +239,7 @@ export class PortainerApi {
             const response = await this.auth.axiosInstance.get('/api/system/status');
             return response.data;
         } catch (error) {
-            console.error('Failed to fetch system status:', error);
+            logError('Failed to fetch system status:', error);
             return undefined;
         }
     }
@@ -273,13 +257,13 @@ export class PortainerApi {
             }
 
             if (environmentId === null) {
-                console.error('No Portainer environments found. Cannot cleanup container.');
+                logError('No Portainer environments found. Cannot cleanup container.');
                 return false;
             }
 
             const containers = await this.getContainers(true);
             if (!containers) {
-                console.error("No containers found, canceled cleanup operation.")
+                logError("No containers found, canceled cleanup operation.")
                 return false;
             }
             const existingContainer = containers.find(c =>
@@ -288,21 +272,21 @@ export class PortainerApi {
             );
 
             if (existingContainer) {
-                console.log(`Cleaning up existing container "${containerName}" (ID: ${existingContainer.Id})`);
+                logInfo(`Cleaning up existing container "${containerName}" (ID: ${existingContainer.Id})`);
 
                 if (existingContainer.State === 'running') {
                     await this.auth.axiosInstance.post(`/api/endpoints/${environmentId}/docker/containers/${existingContainer.Id}/stop`);
-                    console.log('Container stopped');
+                    logInfo('Container stopped');
                 }
 
                 // Remove the container
                 await this.auth.axiosInstance.delete(`/api/endpoints/${environmentId}/docker/containers/${existingContainer.Id}`);
-                console.log('Container removed');
+                logInfo('Container removed');
                 return true;
             }
             return false; // No existing container found
         } catch (error) {
-            console.warn(`Warning: Failed to cleanup existing container "${containerName}":`, error);
+            logWarn(`Warning: Failed to cleanup existing container "${containerName}":`, error);
             return false;
         }
     }
@@ -334,14 +318,14 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot delete stack.');
+            logError('No Portainer environments found. Cannot delete stack.');
             return undefined;
         }
 
         if (typeof stackId === "number") {
             const stack = await getStackById(stackId, environmentId);
             if (!stack) {
-                console.error(`Stack ID ${stackId} does not exist in environment ${environmentId}`);
+                logError(`Stack ID ${stackId} does not exist in environment ${environmentId}`);
                 return undefined;
             }
         }
@@ -349,19 +333,19 @@ export class PortainerApi {
         if (typeof stackId === "string") {
             const stack = await getStackByName(stackId);
             if (!stack) {
-                console.error(`Stack with name "${stackId}" does not exist in environment ${environmentId}`);
+                logError(`Stack with name "${stackId}" does not exist in environment ${environmentId}`);
                 return undefined;
             }
             stackId = stack.Id;
         }
 
         try {
-            console.log(`Deleting stack ${stackId} from environment ${environmentId}...`);
+            logInfo(`Deleting stack ${stackId} from environment ${environmentId}...`);
             const response = await this.auth.axiosInstance.delete(`/api/stacks/${stackId}?endpointId=${environmentId}`);
-            console.log('Stack deleted successfully');
+            logInfo('Stack deleted successfully');
             return response.data;
         } catch (error) {
-            console.error(`Failed to delete stack ${stackId}:`, error);
+            logError(`Failed to delete stack ${stackId}:`, error);
             return undefined;
         }
     }
@@ -378,16 +362,16 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot start container.');
+            logError('No Portainer environments found. Cannot start container.');
             return false;
         }
 
         try {
             await this.auth.axiosInstance.post(`/api/endpoints/${environmentId}/docker/containers/${containerId}/start`);
-            console.log(`Container ${containerId} started successfully.`);
+            logInfo(`Container ${containerId} started successfully.`);
             return true;
         } catch (error) {
-            console.error(`Failed to start container ${containerId}:`, error);
+            logError(`Failed to start container ${containerId}:`, error);
             return false;
         }
     }
@@ -404,16 +388,16 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot stop container.');
+            logError('No Portainer environments found. Cannot stop container.');
             return false;
         }
 
         try {
             await this.auth.axiosInstance.post(`/api/endpoints/${environmentId}/docker/containers/${containerId}/stop`);
-            console.log(`Container ${containerId} stopped successfully.`);
+            logInfo(`Container ${containerId} stopped successfully.`);
             return true;
         } catch (error) {
-            console.error(`Failed to stop container ${containerId}:`, error);
+            logError(`Failed to stop container ${containerId}:`, error);
             return false;
         }
     }
@@ -431,22 +415,22 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot remove container.');
+            logError('No Portainer environments found. Cannot remove container.');
             return false;
         }
 
         try {
-            console.log(`🗑️ Removing container ${containerId}...`);
+            logInfo(`Removing container ${containerId}...`);
             const params = new URLSearchParams();
             if (force) params.append('force', 'true');
             if (removeVolumes) params.append('v', 'true');
 
             const url = `/api/endpoints/${environmentId}/docker/containers/${containerId}?${params.toString()}`;
             await this.auth.axiosInstance.delete(url);
-            console.log('Container removed successfully');
+            logInfo('Container removed successfully');
             return true;
         } catch (error) {
-            console.error(`Failed to remove container ${containerId}:`, error);
+            logError(`Failed to remove container ${containerId}:`, error);
             return false;
         }
     }
@@ -464,17 +448,17 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot kill container.');
+            logError('No Portainer environments found. Cannot kill container.');
             return false;
         }
 
         try {
-            console.log(`Killing container ${containerId} with signal ${signal}...`);
+            logInfo(`Killing container ${containerId} with signal ${signal}...`);
             await this.auth.axiosInstance.post(`/api/endpoints/${environmentId}/docker/containers/${containerId}/kill?signal=${signal}`);
-            console.log('Container killed successfully');
+            logInfo('Container killed successfully');
             return true;
         } catch (error) {
-            console.error(`Failed to kill container ${containerId}:`, error);
+            logError(`Failed to kill container ${containerId}:`, error);
             return false;
         }
     }
@@ -491,17 +475,17 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot pause container.');
+            logError('No Portainer environments found. Cannot pause container.');
             return false;
         }
 
         try {
-            console.log(`Pausing container ${containerId}...`);
+            logInfo(`Pausing container ${containerId}...`);
             await this.auth.axiosInstance.post(`/api/endpoints/${environmentId}/docker/containers/${containerId}/pause`);
-            console.log('Container paused successfully');
+            logInfo('Container paused successfully');
             return true;
         } catch (error) {
-            console.error(`Failed to pause container ${containerId}:`, error);
+            logError(`Failed to pause container ${containerId}:`, error);
             return false;
         }
     }
@@ -518,17 +502,17 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot unpause container.');
+            logError('No Portainer environments found. Cannot unpause container.');
             return false;
         }
 
         try {
-            console.log(`Unpausing container ${containerId}...`);
+            logInfo(`Unpausing container ${containerId}...`);
             await this.auth.axiosInstance.post(`/api/endpoints/${environmentId}/docker/containers/${containerId}/unpause`);
-            console.log('Container unpaused successfully');
+            logInfo('Container unpaused successfully');
             return true;
         } catch (error) {
-            console.error(`Failed to unpause container ${containerId}:`, error);
+            logError(`Failed to unpause container ${containerId}:`, error);
             return false;
         }
     }
@@ -546,17 +530,17 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot restart container.');
+            logError('No Portainer environments found. Cannot restart container.');
             return false;
         }
 
         try {
-            console.log(`Restarting container ${containerId}...`);
+            logInfo(`Restarting container ${containerId}...`);
             await this.auth.axiosInstance.post(`/api/endpoints/${environmentId}/docker/containers/${containerId}/restart?t=${(timeout / 1000).toPrecision(2)}`);
-            console.log('Container restarted successfully');
+            logInfo('Container restarted successfully');
             return true;
         } catch (error) {
-            console.error(`Failed to restart container ${containerId}:`, error);
+            logError(`Failed to restart container ${containerId}:`, error);
             return false;
         }
     }
@@ -573,18 +557,41 @@ export class PortainerApi {
         }
 
         if (environmentId === null) {
-            console.error('No Portainer environments found. Cannot start stack.');
+            logError('No Portainer environments found. Cannot start stack.');
             return false;
         }
 
         try {
-            console.log(`▶️ Starting stack ${stackId}...`);
+            logInfo(`Starting stack ${stackId}...`);
             await this.auth.axiosInstance.post(`/api/stacks/${stackId}/start?endpointId=${environmentId}`);
-            console.log('Stack started successfully');
+            logInfo('Stack started successfully');
             return true;
         } catch (error) {
-            console.error(`Failed to start stack ${stackId}:`, error);
+            logError(`Failed to start stack ${stackId}:`, error);
             return false;
         }
     }
-}
+
+
+    /**
+     * Stop a stack
+     * @param stackId - The ID of the stack to stop
+     * @param environmentId - The ID of the Portainer environment
+     * @returns {Promise<boolean>} Promise resolving when stack is stopped
+     */
+    async stopStack(stackId: number, environmentId?: number | null): Promise<boolean> {
+        if (environmentId === null) {
+            logError('Environment ID is required to stop a stack.');
+            return false;
+        }
+
+        try {
+            logInfo(`Stopping stack ${stackId}...`);
+            await this.auth.axiosInstance.post(`/api/stacks/${stackId}/stop?endpointId=${environmentId}`);
+            logInfo('Stack stopped successfully');
+            return true;
+        } catch (error) {
+            logError(`Failed to stop stack ${stackId}:`, error);
+            return false;
+        }
+    }}
