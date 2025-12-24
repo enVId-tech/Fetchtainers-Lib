@@ -145,24 +145,24 @@ export async function verifyStackCreation(stackName: string, timeoutMs: number =
  * @returns Promise resolving to true if container exists
  */
 export async function verifyContainerCreation(containerName: string, timeoutMs: number = 5000): Promise<boolean> {
-        const startTime = Date.now();
+    const startTime = Date.now();
 
-        while (Date.now() - startTime < timeoutMs) {
-            try {
-                const container = await getContainerByName(containerName);
+    while (Date.now() - startTime < timeoutMs) {
+        try {
+            const container = await getContainerByName(containerName);
 
-                if (container) {
-                    console.log(`Container "${containerName}" verified successfully (State: ${container.State})`);
-                    return true;
-                }
-            } catch (error) {
-                console.warn('Error during container verification:', error);
+            if (container) {
+                console.log(`Container "${containerName}" verified successfully (State: ${container.State})`);
+                return true;
             }
-
-            // Wait 1 second before retrying
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+            console.warn('Error during container verification:', error);
         }
 
-        console.warn(`Container verification timed out for "${containerName}"`);
-        return false;
+        // Wait 1 second before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
     }
+
+    console.warn(`Container verification timed out for "${containerName}"`);
+    return false;
+}

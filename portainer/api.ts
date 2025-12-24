@@ -278,7 +278,6 @@ export class PortainerApi {
     */
     deleteStack(stackName: string, environmentId?: number | null): Promise<Record<string, unknown>>;
 
-
     /**
      * Delete a stack from Portainer using the given stack id.
      * @param stackId - The ID of the stack to delete
@@ -319,4 +318,23 @@ export class PortainerApi {
             throw error;
         }
     }
+
+    async startContainer(containerId: string, environmentId?: number | null): Promise<void> {
+        if (environmentId === null || environmentId === undefined) {
+            environmentId = await this.ensureEnvId();
+        }
+
+        if (environmentId === null) {
+            throw new Error('No Portainer environments found. Cannot start container.');
+        }
+
+        try {
+            await this.auth.axiosInstance.post(`/api/endpoints/${environmentId}/docker/containers/${containerId}/start`);
+            console.log(`Container ${containerId} started successfully.`);
+        } catch (error) {
+            console.error(`Failed to start container ${containerId}:`, error);
+            throw error;
+        }
+    }
 }
+
