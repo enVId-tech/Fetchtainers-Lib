@@ -1,4 +1,3 @@
-import type { AxiosInstance } from "axios";
 import { logError, logInfo, logWarn } from "@/logger.ts";
 import { Constructor, PortainerEnvironment } from "../types.ts";
 import { getFirstEnvironmentId } from "../utils.ts";
@@ -6,7 +5,7 @@ import { getFirstEnvironmentId } from "../utils.ts";
 export interface EnvMixin {
     auth: {
         isValidated: boolean;
-        axiosInstance: AxiosInstance;
+        axiosInstance: import("axios").AxiosInstance;
     };
     environmentId: number | null;
 }

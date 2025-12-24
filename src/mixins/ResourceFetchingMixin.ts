@@ -1,10 +1,9 @@
 import { logError } from "@/logger.ts";
 import { Constructor, PortainerContainer, PortainerImage, PortainerStack } from "../types.ts";
-import { AxiosInstance } from "axios";
 
 interface RFMixin {
     auth: {
-        axiosInstance: AxiosInstance;
+        axiosInstance: import("axios").AxiosInstance;
     };
     ensureEnvId: () => Promise<number | null>;
 }
