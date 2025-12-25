@@ -85,6 +85,9 @@ export function ContainerControlsMixin<TBase extends Constructor<CCtrlMixin>>(Ba
                             logInfo('Container restarted successfully');
                             break;
                         }
+                    default:
+                        logError(`Unknown action: ${controls.action}`);
+                        return false;
                 }
                 return true;
             }

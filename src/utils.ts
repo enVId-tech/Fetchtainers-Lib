@@ -74,7 +74,7 @@ export async function getStackByName(stackName: string): Promise<any | null> {
     }
 }
 
-export async function getStackById(stackid: number, environmentId: number) {
+export async function getStackById(stackid: number, environmentId: number): Promise<any | null> {
     try {
         const stacks = await PortainerApi.instance.getStacks();
         if (!stacks) {

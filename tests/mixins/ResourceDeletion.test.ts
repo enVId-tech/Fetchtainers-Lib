@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ResourceDeletionMixin } from "../../src/mixins/ResourceDeletionMixin.ts";
+import { getStackByName } from "@/src/utils.ts";
 
 class MockBase {
     auth = {
@@ -134,32 +135,38 @@ describe("Resource Deletion Mixin Tests", () => {
 
         it("should handle stackId types correctly", async () => {
             instance.ensureEnvId.mockResolvedValue(1);
-            
+
             // Mock utils functions
-            vi.mock("../../src/utils.ts", () => ({
-                getStackById: vi.fn().mockResolvedValue({ Id: 123, Name: "test-stack" }),
-                getStackByName: vi.fn().mockResolvedValue({ Id: 456, Name: "named-stack" })
-            }));
+            vi.mock("../../src/utils.ts", async () => {
+                return {
+                    getStackById: vi.fn().mockResolvedValue({ Id: 123, Name: "test-stack" }),
+                }
+            });
 
             instance.auth.axiosInstance.delete.mockResolvedValue({ data: { success: true } });
 
             // Test with number
-            const result1 = await instance.deleteStack(123, 1);
+            await instance.deleteStack(123, 1);
             expect(typeof 123).toBe("number");
 
             // Test with string
-            const result2 = await instance.deleteStack("test-stack", 1);
+            await instance.deleteStack("test-stack", 1);
             expect(typeof "test-stack").toBe("string");
         });
 
         it("should delete stack by ID successfully", async () => {
             instance.ensureEnvId.mockResolvedValue(1);
-            vi.mock("../../src/utils.ts", () => ({
-                getStackById: vi.fn().mockResolvedValue({ Id: 123, Name: "test-stack" })
-            }));
+            vi.mock("../../src/utils.ts", async (importOriginal) => {
+                const originalModule = await importOriginal<any>();
+                return {
+                    ...originalModule,
+                    getStackById: vi.fn().mockResolvedValue({ Id: 123, Name: "test-stack" }),
+                    getStackByName: vi.fn().mockResolvedValue({ Id: 456, Name: "named-stack" })
+                };
+            });
             instance.auth.axiosInstance.delete.mockResolvedValue({ data: { success: true } });
 
-            const result = await instance.deleteStack(123, 1);
+            await instance.deleteStack(123, 1);
 
             expect(instance.auth.axiosInstance.delete).toHaveBeenCalledWith(
                 "/api/stacks/123?endpointId=1"
@@ -168,12 +175,17 @@ describe("Resource Deletion Mixin Tests", () => {
 
         it("should delete stack by name successfully", async () => {
             instance.ensureEnvId.mockResolvedValue(1);
-            vi.mock("../../src/utils.ts", () => ({
-                getStackByName: vi.fn().mockResolvedValue({ Id: 456, Name: "test-stack" })
-            }));
+            vi.mock("../../src/utils.ts", async (importOriginal) => {
+                const originalModule = await importOriginal<any>();
+                return {
+                    ...originalModule,
+                    getStackById: vi.fn().mockResolvedValue({ Id: 123, Name: "test-stack" }),
+                    getStackByName: vi.fn().mockResolvedValue({ Id: 456, Name: "named-stack" })
+                };
+            });
             instance.auth.axiosInstance.delete.mockResolvedValue({ data: { success: true } });
 
-            const result = await instance.deleteStack("test-stack", 1);
+            await instance.deleteStack("test-stack", 1);
 
             // The stackId gets converted to the numeric ID
             expect(instance.auth.axiosInstance.delete).toHaveBeenCalled();
@@ -181,9 +193,14 @@ describe("Resource Deletion Mixin Tests", () => {
 
         it("should handle errors during stack deletion gracefully", async () => {
             instance.ensureEnvId.mockResolvedValue(1);
-            vi.mock("../../src/utils.ts", () => ({
-                getStackById: vi.fn().mockResolvedValue({ Id: 123, Name: "test-stack" })
-            }));
+            vi.mock("../../src/utils.ts", async (importOriginal) => {
+                const originalModule = await importOriginal<any>();
+                return {
+                    ...originalModule,
+                    getStackById: vi.fn().mockResolvedValue({ Id: 123, Name: "test-stack" }),
+                    getStackByName: vi.fn().mockResolvedValue({ Id: 456, Name: "named-stack" })
+                };
+            });
             instance.auth.axiosInstance.delete.mockRejectedValue(new Error("API Error"));
 
             const result = await instance.deleteStack(123, 1);
