@@ -38,6 +38,15 @@ export function ResourceFetchingMixin<TBase extends Constructor<RFMixin>>(Base: 
          * @returns {Promise<PortainerContainer[] | undefined>} A promise that resolves to an array of container objects.
          */
         async getContainers(includeAll: boolean, environmentId?: number | null): Promise<PortainerContainer[] | undefined> {
+            if (typeof includeAll !== 'boolean') {
+                logError('Invalid includeAll: must be a boolean');
+                return undefined;
+            }
+
+            if (environmentId !== undefined && environmentId !== null && (typeof environmentId !== 'number' || isNaN(environmentId))) {
+                logError('Invalid environmentId: must be a number, null, or undefined');
+                return undefined;
+            }
 
             if (!this.auth.isValidated) {
                 logError('Authentication is not validated. Cannot fetch containers.');
@@ -85,17 +94,22 @@ export function ResourceFetchingMixin<TBase extends Constructor<RFMixin>>(Base: 
          * @returns {Promise<PortainerContainer | undefined>} A promise that resolves to the container object.
          */
         async getContainerDetails(identifier: string, environmentId?: number | null): Promise<PortainerContainer | undefined> {
+            if (!identifier || typeof identifier !== 'string') {
+                logError('Invalid identifier: must be a non-empty string');
+                return undefined;
+            }
+
+            if (environmentId !== undefined && environmentId !== null && (typeof environmentId !== 'number' || isNaN(environmentId))) {
+                logError('Invalid environmentId: must be a number, null, or undefined');
+                return undefined;
+            }
+
             if (environmentId === null || environmentId === undefined) {
                 environmentId = await this.ensureEnvId();
             }
 
             if (environmentId === null) {
                 logError('No Portainer environments found. Cannot fetch container details.');
-                return undefined;
-            }
-
-            if (!identifier) {
-                logError('Container ID is required to fetch container details.');
                 return undefined;
             }
 
@@ -137,6 +151,11 @@ export function ResourceFetchingMixin<TBase extends Constructor<RFMixin>>(Base: 
          * @returns {Promise<PortainerImage[] | undefined>} A promise that resolves to an array of image objects.
          */
         async getImages(environmentId?: number | null): Promise<PortainerImage[] | undefined> {
+            if (environmentId !== undefined && environmentId !== null && (typeof environmentId !== 'number' || isNaN(environmentId))) {
+                logError('Invalid environmentId: must be a number, null, or undefined');
+                return undefined;
+            }
+
             if (environmentId === null || environmentId === undefined) {
                 environmentId = await this.ensureEnvId();
             }

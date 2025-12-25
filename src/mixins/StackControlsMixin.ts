@@ -17,6 +17,16 @@ export function StackControlsMixin<TBase extends Constructor<SCtrlsMixin>>(Base:
          * @returns {Promise<boolean>} Promise resolving when stack is started
          */
         async startStack(stackId: number, environmentId?: number | null): Promise<boolean> {
+            if (typeof stackId !== 'number' || isNaN(stackId) || stackId <= 0) {
+                logError('Invalid stackId: must be a positive number');
+                return false;
+            }
+
+            if (environmentId !== undefined && environmentId !== null && (typeof environmentId !== 'number' || isNaN(environmentId))) {
+                logError('Invalid environmentId: must be a number, null, or undefined');
+                return false;
+            }
+
             if (environmentId === null || environmentId === undefined) {
                 environmentId = await this.ensureEnvId();
             }
@@ -45,6 +55,16 @@ export function StackControlsMixin<TBase extends Constructor<SCtrlsMixin>>(Base:
          * @returns {Promise<boolean>} Promise resolving when stack is stopped
          */
         async stopStack(stackId: number, environmentId?: number | null): Promise<boolean> {
+            if (typeof stackId !== 'number' || isNaN(stackId) || stackId <= 0) {
+                logError('Invalid stackId: must be a positive number');
+                return false;
+            }
+
+            if (environmentId !== undefined && environmentId !== null && (typeof environmentId !== 'number' || isNaN(environmentId))) {
+                logError('Invalid environmentId: must be a number, null, or undefined');
+                return false;
+            }
+
             if (environmentId === null || environmentId === undefined) {
                 environmentId = await this.ensureEnvId();
             }

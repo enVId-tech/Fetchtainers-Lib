@@ -36,6 +36,105 @@ describe("Container Controls Tests", () => {
             expect(instance.auth.axiosInstance.post).toHaveBeenCalled();
         });
 
+        it("should reject invalid controls parameter types", async () => {
+            const result1 = await instance.handleContainer(null as any);
+            const result2 = await instance.handleContainer(undefined as any);
+            const result3 = await instance.handleContainer("invalid" as any);
+            const result4 = await instance.handleContainer(123 as any);
+            
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+            expect(result3).toBe(false);
+            expect(result4).toBe(false);
+        });
+
+        it("should reject invalid action types", async () => {
+            const result1 = await instance.handleContainer({
+                action: null as any,
+                containerId: 'abc123'
+            });
+            const result2 = await instance.handleContainer({
+                action: 123 as any,
+                containerId: 'abc123'
+            });
+            const result3 = await instance.handleContainer({
+                action: '' as any,
+                containerId: 'abc123'
+            });
+            
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+            expect(result3).toBe(false);
+        });
+
+        it("should reject invalid containerId types", async () => {
+            const result1 = await instance.handleContainer({
+                action: 'start',
+                containerId: null as any
+            });
+            const result2 = await instance.handleContainer({
+                action: 'start',
+                containerId: 123 as any
+            });
+            const result3 = await instance.handleContainer({
+                action: 'start',
+                containerId: '' as any
+            });
+            
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+            expect(result3).toBe(false);
+        });
+
+        it("should reject invalid environmentId types", async () => {
+            const result = await instance.handleContainer({
+                action: 'start',
+                containerId: 'abc123',
+                environmentId: "invalid" as any
+            });
+            
+            expect(result).toBe(false);
+        });
+
+        it("should reject invalid options types", async () => {
+            const result1 = await instance.handleContainer({
+                action: 'remove',
+                containerId: 'abc123',
+                environmentId: 1,
+                options: { force: "yes" as any }
+            });
+            const result2 = await instance.handleContainer({
+                action: 'remove',
+                containerId: 'abc123',
+                environmentId: 1,
+                options: { removeVolumes: 1 as any }
+            });
+            const result3 = await instance.handleContainer({
+                action: 'kill',
+                containerId: 'abc123',
+                environmentId: 1,
+                options: { signal: 123 as any }
+            });
+            const result4 = await instance.handleContainer({
+                action: 'restart',
+                containerId: 'abc123',
+                environmentId: 1,
+                options: { timeout: "10" as any }
+            });
+            const result5 = await instance.handleContainer({
+                action: 'restart',
+                containerId: 'abc123',
+                environmentId: 1,
+                options: { timeout: -5 }
+            });
+            
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+            expect(result3).toBe(false);
+            expect(result4).toBe(false);
+            expect(result5).toBe(false);
+        });
+
         it("should return false when no environment ID is found", async () => {
             instance.ensureEnvId.mockResolvedValue(null);
 

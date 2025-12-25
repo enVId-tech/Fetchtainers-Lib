@@ -48,6 +48,26 @@ describe("Resource Fetching Mixin Tests", () => {
         });
     });
     describe("getContainers()", () => {
+        it("should reject invalid includeAll types", async () => {
+            const result1 = await instance.getContainers(null as any);
+            const result2 = await instance.getContainers(undefined as any);
+            const result3 = await instance.getContainers("true" as any);
+            const result4 = await instance.getContainers(1 as any);
+            
+            expect(result1).toBeUndefined();
+            expect(result2).toBeUndefined();
+            expect(result3).toBeUndefined();
+            expect(result4).toBeUndefined();
+        });
+
+        it("should reject invalid environmentId types", async () => {
+            const result1 = await instance.getContainers(true, "invalid" as any);
+            const result2 = await instance.getContainers(true, NaN as any);
+            
+            expect(result1).toBeUndefined();
+            expect(result2).toBeUndefined();
+        });
+
         it("should handle invalid authentication cycle gracefully", async () => {
             instance.auth.isValidated = false;
 
@@ -115,6 +135,26 @@ describe("Resource Fetching Mixin Tests", () => {
         });
     });
     describe("getContainerDetails()", () => {
+        it("should reject invalid identifier types", async () => {
+            const result1 = await instance.getContainerDetails(null as any);
+            const result2 = await instance.getContainerDetails(undefined as any);
+            const result3 = await instance.getContainerDetails(123 as any);
+            const result4 = await instance.getContainerDetails("" as any);
+            
+            expect(result1).toBeUndefined();
+            expect(result2).toBeUndefined();
+            expect(result3).toBeUndefined();
+            expect(result4).toBeUndefined();
+        });
+
+        it("should reject invalid environmentId types", async () => {
+            const result1 = await instance.getContainerDetails("test", "invalid" as any);
+            const result2 = await instance.getContainerDetails("test", NaN as any);
+            
+            expect(result1).toBeUndefined();
+            expect(result2).toBeUndefined();
+        });
+
         it("should handle invalid environment ID gracefully", async () => {
             instance.ensureEnvId.mockResolvedValue(null);
 
@@ -193,6 +233,14 @@ describe("Resource Fetching Mixin Tests", () => {
         });
     });
     describe("getImages()", () => {
+        it("should reject invalid environmentId types", async () => {
+            const result1 = await instance.getImages("invalid" as any);
+            const result2 = await instance.getImages(NaN as any);
+            
+            expect(result1).toBeUndefined();
+            expect(result2).toBeUndefined();
+        });
+
         it("should handle invalid environment ID gracefully", async () => {
             instance.ensureEnvId.mockResolvedValue(null);
 

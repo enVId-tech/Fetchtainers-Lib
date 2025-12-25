@@ -23,6 +23,26 @@ describe("Resource Deletion Mixin Tests", () => {
     });
 
     describe("cleanupExistingContainer()", () => {
+        it("should reject invalid containerName types", async () => {
+            const result1 = await instance.cleanupExistingContainer(null as any);
+            const result2 = await instance.cleanupExistingContainer(undefined as any);
+            const result3 = await instance.cleanupExistingContainer(123 as any);
+            const result4 = await instance.cleanupExistingContainer("" as any);
+            
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+            expect(result3).toBe(false);
+            expect(result4).toBe(false);
+        });
+
+        it("should reject invalid environmentId types", async () => {
+            const result1 = await instance.cleanupExistingContainer("test", "invalid" as any);
+            const result2 = await instance.cleanupExistingContainer("test", NaN as any);
+            
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+        });
+
         it("should handle undefined environment IDs gracefully", async () => {
             instance.ensureEnvId.mockResolvedValue(null);
 
@@ -123,6 +143,44 @@ describe("Resource Deletion Mixin Tests", () => {
     });
 
     describe("deleteStack()", () => {
+        it("should reject invalid stackId types", async () => {
+            const result1 = await instance.deleteStack(null as any);
+            const result2 = await instance.deleteStack(undefined as any);
+            const result3 = await instance.deleteStack([] as any);
+            const result4 = await instance.deleteStack({} as any);
+            
+            expect(result1).toBeUndefined();
+            expect(result2).toBeUndefined();
+            expect(result3).toBeUndefined();
+            expect(result4).toBeUndefined();
+        });
+
+        it("should reject invalid number stackId values", async () => {
+            const result1 = await instance.deleteStack(-5);
+            const result2 = await instance.deleteStack(0);
+            const result3 = await instance.deleteStack(NaN);
+            
+            expect(result1).toBeUndefined();
+            expect(result2).toBeUndefined();
+            expect(result3).toBeUndefined();
+        });
+
+        it("should reject empty string stackId", async () => {
+            const result1 = await instance.deleteStack("");
+            const result2 = await instance.deleteStack("   ");
+            
+            expect(result1).toBeUndefined();
+            expect(result2).toBeUndefined();
+        });
+
+        it("should reject invalid environmentId types", async () => {
+            const result1 = await instance.deleteStack(123, "invalid" as any);
+            const result2 = await instance.deleteStack(123, NaN as any);
+            
+            expect(result1).toBeUndefined();
+            expect(result2).toBeUndefined();
+        });
+
         it("should handle undefined environment IDs gracefully", async () => {
             instance.ensureEnvId.mockResolvedValue(null);
 

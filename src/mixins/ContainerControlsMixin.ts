@@ -23,6 +23,55 @@ interface ContainerControls {
 export function ContainerControlsMixin<TBase extends Constructor<CCtrlMixin>>(Base: TBase) {
     return class extends Base {
         async handleContainer(controls: ContainerControls): Promise<boolean> {
+            if (!controls || typeof controls !== 'object') {
+                logError('Invalid controls: must be an object');
+                return false;
+            }
+
+            if (!controls.action || typeof controls.action !== 'string') {
+                logError('Invalid action: must be a string');
+                return false;
+            }
+
+            const validActions = ['start', 'stop', 'remove', 'kill', 'pause', 'unpause', 'restart'];
+            if (!validActions.includes(controls.action)) {
+                logError(`Invalid action: must be one of ${validActions.join(', ')}`);
+                return false;
+            }
+
+            if (!controls.containerId || typeof controls.containerId !== 'string') {
+                logError('Invalid containerId: must be a non-empty string');
+                return false;
+            }
+
+            if (controls.environmentId !== undefined && controls.environmentId !== null && (typeof controls.environmentId !== 'number' || isNaN(controls.environmentId))) {
+                logError('Invalid environmentId: must be a number, null, or undefined');
+                return false;
+            }
+
+            if (controls.options) {
+                if (typeof controls.options !== 'object') {
+                    logError('Invalid options: must be an object');
+                    return false;
+                }
+                if (controls.options.force !== undefined && typeof controls.options.force !== 'boolean') {
+                    logError('Invalid options.force: must be a boolean');
+                    return false;
+                }
+                if (controls.options.removeVolumes !== undefined && typeof controls.options.removeVolumes !== 'boolean') {
+                    logError('Invalid options.removeVolumes: must be a boolean');
+                    return false;
+                }
+                if (controls.options.signal !== undefined && typeof controls.options.signal !== 'string') {
+                    logError('Invalid options.signal: must be a string');
+                    return false;
+                }
+                if (controls.options.timeout !== undefined && (typeof controls.options.timeout !== 'number' || isNaN(controls.options.timeout) || controls.options.timeout < 0)) {
+                    logError('Invalid options.timeout: must be a non-negative number');
+                    return false;
+                }
+            }
+
             if (controls.environmentId === null || controls.environmentId === undefined) {
                 controls.environmentId = await this.ensureEnvId();
             }

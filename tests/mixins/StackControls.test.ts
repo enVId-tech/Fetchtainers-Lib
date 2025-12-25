@@ -32,6 +32,30 @@ describe("Stack Controls Mixin Tests", () => {
             expect(instance.auth.axiosInstance.post).not.toHaveBeenCalled();
         });
 
+        it("should reject invalid stackId types", async () => {
+            const result1 = await instance.startStack("invalid" as any);
+            const result2 = await instance.startStack(null as any);
+            const result3 = await instance.startStack(undefined as any);
+            const result4 = await instance.startStack(-5 as any);
+            const result5 = await instance.startStack(0 as any);
+            const result6 = await instance.startStack(NaN as any);
+            
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+            expect(result3).toBe(false);
+            expect(result4).toBe(false);
+            expect(result5).toBe(false);
+            expect(result6).toBe(false);
+        });
+
+        it("should reject invalid environmentId types", async () => {
+            const result1 = await instance.startStack(123, "invalid" as any);
+            const result2 = await instance.startStack(123, NaN as any);
+            
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+        });
+
         it("should handle invalid stack IDs gracefully", async () => {
             instance.ensureEnvId.mockResolvedValue(1);
             instance.auth.axiosInstance.post.mockRejectedValue(new Error("Stack not found"));
@@ -61,6 +85,30 @@ describe("Stack Controls Mixin Tests", () => {
             expect(result).toBe(false);
             expect(instance.ensureEnvId).toHaveBeenCalled();
             expect(instance.auth.axiosInstance.post).not.toHaveBeenCalled();
+        });
+
+        it("should reject invalid stackId types", async () => {
+            const result1 = await instance.stopStack("invalid" as any);
+            const result2 = await instance.stopStack(null as any);
+            const result3 = await instance.stopStack(undefined as any);
+            const result4 = await instance.stopStack(-5 as any);
+            const result5 = await instance.stopStack(0 as any);
+            const result6 = await instance.stopStack(NaN as any);
+            
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+            expect(result3).toBe(false);
+            expect(result4).toBe(false);
+            expect(result5).toBe(false);
+            expect(result6).toBe(false);
+        });
+
+        it("should reject invalid environmentId types", async () => {
+            const result1 = await instance.stopStack(123, "invalid" as any);
+            const result2 = await instance.stopStack(123, NaN as any);
+            
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
         });
 
         it("should handle invalid stack IDs gracefully", async () => {

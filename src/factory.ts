@@ -34,6 +34,18 @@ export class PortainerFactory {
      * @returns {Promise<Record<string, unknown>>} A promise that resolves to the created stack object or an empty object on failure.
      */
     public async createStack(stackData: Record<string, unknown>, maxRetryCount?: number, timeoutMs?: number): Promise<Record<string, unknown>> {
+        if (!stackData || typeof stackData !== 'object' || Array.isArray(stackData)) {
+            throw new Error('Invalid stackData: must be a non-null object');
+        }
+
+        if (maxRetryCount !== undefined && (typeof maxRetryCount !== 'number' || isNaN(maxRetryCount))) {
+            throw new Error('Invalid maxRetryCount: must be a number');
+        }
+
+        if (timeoutMs !== undefined && (typeof timeoutMs !== 'number' || isNaN(timeoutMs))) {
+            throw new Error('Invalid timeoutMs: must be a number');
+        }
+
         const envCheck = await this.portainerClient.ensureEnvId();
         if (envCheck === null) {
             throw new Error('Environment ID is required to create a stack.');
@@ -116,6 +128,18 @@ export class PortainerFactory {
      * @returns {Promise<Record<string, unknown>>} A promise that resolves to the created stack object or an empty object on failure.
      */
     async createContainer(stackData: Record<string, unknown>, maxRetryCount?: number, timeoutMs?: number): Promise<Record<string, unknown>> {
+        if (!stackData || typeof stackData !== 'object' || Array.isArray(stackData)) {
+            throw new Error('Invalid stackData: must be a non-null object');
+        }
+
+        if (maxRetryCount !== undefined && (typeof maxRetryCount !== 'number' || isNaN(maxRetryCount))) {
+            throw new Error('Invalid maxRetryCount: must be a number');
+        }
+
+        if (timeoutMs !== undefined && (typeof timeoutMs !== 'number' || isNaN(timeoutMs))) {
+            throw new Error('Invalid timeoutMs: must be a number');
+        }
+
         const stackName = stackData.Name as string;
         const composeContent = (stackData.ContainerPayload) as string;
         const serviceName = stackName.toLowerCase().replace(/[^a-z0-9-]/g, '-');

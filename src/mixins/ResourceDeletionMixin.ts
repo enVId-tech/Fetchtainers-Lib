@@ -19,6 +19,16 @@ export function ResourceDeletionMixin<TBase extends Constructor<RDMixin>>(Base: 
              * @returns {Promise<boolean>} Promise resolving to true if a container was cleaned up, false otherwise
              */
             async cleanupExistingContainer(containerName: string, environmentId?: number | null): Promise<boolean> {
+                if (!containerName || typeof containerName !== 'string') {
+                    logError('Invalid containerName: must be a non-empty string');
+                    return false;
+                }
+
+                if (environmentId !== undefined && environmentId !== null && (typeof environmentId !== 'number' || isNaN(environmentId))) {
+                    logError('Invalid environmentId: must be a number, null, or undefined');
+                    return false;
+                }
+
                 try {
                     if (environmentId === null || environmentId === undefined) {
                         environmentId = await this.ensureEnvId();
@@ -81,6 +91,26 @@ export function ResourceDeletionMixin<TBase extends Constructor<RDMixin>>(Base: 
              * @returns {Promise<Record<string, unknown> | undefined>} Promise resolving to the delete operation result
              */
             async deleteStack(stackId: number | string, environmentId?: number | null): Promise<Record<string, unknown> | undefined> {
+                if (typeof stackId !== 'number' && typeof stackId !== 'string') {
+                    logError('Invalid stackId: must be a number or string');
+                    return undefined;
+                }
+
+                if (typeof stackId === 'number' && (isNaN(stackId) || stackId <= 0)) {
+                    logError('Invalid stackId: must be a positive number');
+                    return undefined;
+                }
+
+                if (typeof stackId === 'string' && !stackId.trim()) {
+                    logError('Invalid stackId: string must not be empty');
+                    return undefined;
+                }
+
+                if (environmentId !== undefined && environmentId !== null && (typeof environmentId !== 'number' || isNaN(environmentId))) {
+                    logError('Invalid environmentId: must be a number, null, or undefined');
+                    return undefined;
+                }
+
                 if (environmentId === null || environmentId === undefined) {
                     environmentId = await this.ensureEnvId();
                 }
