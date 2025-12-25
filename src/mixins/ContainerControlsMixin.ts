@@ -35,15 +35,19 @@ export function ContainerControlsMixin<TBase extends Constructor<CCtrlMixin>>(Ba
             try {
                 switch (controls.action) {
                     case 'start':
-                        logInfo(`Starting container ${controls.containerId}...`);
-                        await this.auth.axiosInstance.post(`/api/endpoints/${controls.environmentId}/docker/containers/${controls.containerId}/start`);
-                        logInfo('Container started successfully');
-                        break;
+                        {
+                            logInfo(`Starting container ${controls.containerId}...`);
+                            await this.auth.axiosInstance.post(`/api/endpoints/${controls.environmentId}/docker/containers/${controls.containerId}/start`);
+                            logInfo('Container started successfully');
+                            break;
+                        }
                     case 'stop':
-                        logInfo(`Stopping container ${controls.containerId}...`);
-                        await this.auth.axiosInstance.post(`/api/endpoints/${controls.environmentId}/docker/containers/${controls.containerId}/stop`);
-                        logInfo('Container stopped successfully');
-                        break;
+                        {
+                            logInfo(`Stopping container ${controls.containerId}...`);
+                            await this.auth.axiosInstance.post(`/api/endpoints/${controls.environmentId}/docker/containers/${controls.containerId}/stop`);
+                            logInfo('Container stopped successfully');
+                            break;
+                        }
                     case 'remove':
                         {
                             logInfo(`Removing container ${controls.containerId}...`);

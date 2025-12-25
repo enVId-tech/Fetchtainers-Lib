@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ResourceDeletionMixin } from "../../src/mixins/ResourceDeletionMixin.ts";
-import { getStackByName } from "@/src/utils.ts";
 
 class MockBase {
     auth = {

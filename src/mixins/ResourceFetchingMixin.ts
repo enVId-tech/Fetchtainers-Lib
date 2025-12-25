@@ -4,6 +4,7 @@ import type { Constructor, PortainerContainer, PortainerImage, PortainerStack } 
 interface RFMixin {
     auth: {
         axiosInstance: import("axios").AxiosInstance;
+        isValidated: boolean;
     };
     ensureEnvId: () => Promise<number | null>;
 }
@@ -16,6 +17,11 @@ export function ResourceFetchingMixin<TBase extends Constructor<RFMixin>>(Base: 
          */
         async getStacks(): Promise<PortainerStack[] | undefined> {
             try {
+                if (!this.auth.isValidated) {
+                    logError('Authentication is not validated. Cannot fetch stacks.');
+                    return undefined;
+                }
+
                 const response = await this.auth.axiosInstance.get<PortainerStack[]>('/api/stacks');
                 return response.data;
             } catch (error) {

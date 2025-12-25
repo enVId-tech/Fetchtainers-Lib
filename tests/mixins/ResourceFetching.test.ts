@@ -1,10 +1,51 @@
-import { describe, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ResourceFetchingMixin } from "../../src/mixins/ResourceFetchingMixin";
+
+class MockBase {
+    auth = {
+        axiosInstance: {
+            get: vi.fn()
+        },
+        isValidated: true
+    };
+    ensureEnvId = vi.fn();
+}
+
+const ResourceFetchingClass = ResourceFetchingMixin(MockBase as any);
 
 describe("Resource Fetching Mixin Tests", () => {
+    let instance: InstanceType<typeof ResourceFetchingClass>;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        instance = new ResourceFetchingClass();
+    });
+    
     describe("getStacks()", () => {
-        it("should handle invalid authentication cycle gracefully", async () => { });
-        it("should handle API errors gracefully", async () => { });
-        it("should return a list of stacks for successful API call", async () => { });
+        it("should handle invalid authentication cycle gracefully", async () => { 
+            instance.auth.isValidated = false;
+
+            const result = await instance.getStacks();
+
+            expect(result).toBeUndefined();
+            expect(instance.auth.axiosInstance.get).not.toHaveBeenCalled();
+        });
+        it("should handle API errors gracefully", async () => { 
+            instance.auth.axiosInstance.get.mockRejectedValue(new Error("API Error"));
+
+            const result = await instance.getStacks();
+
+            expect(instance.auth.axiosInstance.get).toBeCalled();
+            expect(result).toBeUndefined();
+        });
+        it("should return a list of stacks for successful API call", async () => { 
+            instance.auth.axiosInstance.get.mockResolvedValue({ data: [{ Id: 1, Name: "Test Stack" }] });
+
+            const result = await instance.getStacks();
+
+            expect(instance.auth.axiosInstance.get).toHaveBeenCalledWith("/api/stacks");
+            expect(result).toEqual([{ Id: 1, Name: "Test Stack" }]);
+        });
     });
     describe("getContainers()", () => {
         it("should handle invalid authentication cycle gracefully", async () => { });
