@@ -23,6 +23,16 @@ describe("Resource Deletion Mixin Tests", () => {
     });
 
     describe("cleanupExistingContainer()", () => {
+        it("should accept undefined for optional environmentId parameter", async () => {
+            instance.ensureEnvId.mockResolvedValue(1);
+            instance.getContainers.mockResolvedValue([]);
+            
+            const result = await instance.cleanupExistingContainer("test", undefined);
+            
+            expect(instance.ensureEnvId).toHaveBeenCalled();
+            expect(result).toBe(false); // No container found, so returns false
+        });
+
         it("should reject invalid containerName types", async () => {
             const result1 = await instance.cleanupExistingContainer(null as any);
             const result2 = await instance.cleanupExistingContainer(undefined as any);
@@ -143,6 +153,26 @@ describe("Resource Deletion Mixin Tests", () => {
     });
 
     describe("deleteStack()", () => {
+        it("should accept undefined for optional environmentId parameter with number stackId", async () => {
+            instance.ensureEnvId.mockResolvedValue(1);
+            instance.auth.axiosInstance.delete.mockResolvedValue({ data: {} });
+            
+            const result = await instance.deleteStack(123, undefined);
+            
+            expect(instance.ensureEnvId).toHaveBeenCalled();
+            expect(result).toEqual({}); // Returns response.data
+        });
+
+        it("should accept undefined for optional environmentId parameter with string stackId", async () => {
+            instance.ensureEnvId.mockResolvedValue(1);
+            instance.auth.axiosInstance.delete.mockResolvedValue({ data: {} });
+            
+            const result = await instance.deleteStack("my-stack", undefined);
+            
+            expect(instance.ensureEnvId).toHaveBeenCalled();
+            expect(result).toEqual({}); // Returns response.data
+        });
+
         it("should reject invalid stackId types", async () => {
             const result1 = await instance.deleteStack(null as any);
             const result2 = await instance.deleteStack(undefined as any);

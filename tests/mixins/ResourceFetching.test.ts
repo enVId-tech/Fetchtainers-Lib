@@ -48,6 +48,16 @@ describe("Resource Fetching Mixin Tests", () => {
         });
     });
     describe("getContainers()", () => {
+        it("should accept undefined for optional environmentId parameter", async () => {
+            instance.ensureEnvId.mockResolvedValue(1);
+            instance.auth.axiosInstance.get.mockResolvedValue({ data: [{ Id: "abc123", Names: ["/test"] }] });
+            
+            const result = await instance.getContainers(true, undefined);
+            
+            expect(instance.ensureEnvId).toHaveBeenCalled();
+            expect(result).toEqual([{ Id: "abc123", Names: ["/test"] }]);
+        });
+
         it("should reject invalid includeAll types", async () => {
             const result1 = await instance.getContainers(null as any);
             const result2 = await instance.getContainers(undefined as any);
@@ -135,6 +145,17 @@ describe("Resource Fetching Mixin Tests", () => {
         });
     });
     describe("getContainerDetails()", () => {
+        it("should accept undefined for optional environmentId parameter", async () => {
+            const mockContainer = { Id: "abc123", Names: ["/test"], State: "running" };
+            instance.ensureEnvId.mockResolvedValue(1);
+            instance.auth.axiosInstance.get.mockResolvedValue({ data: mockContainer });
+            
+            const result = await instance.getContainerDetails("test", undefined);
+            
+            expect(instance.ensureEnvId).toHaveBeenCalled();
+            expect(result).toEqual(mockContainer);
+        });
+
         it("should reject invalid identifier types", async () => {
             const result1 = await instance.getContainerDetails(null as any);
             const result2 = await instance.getContainerDetails(undefined as any);
@@ -233,6 +254,17 @@ describe("Resource Fetching Mixin Tests", () => {
         });
     });
     describe("getImages()", () => {
+        it("should accept undefined for optional environmentId parameter", async () => {
+            const mockImages = [{ Id: "img123", RepoTags: ["nginx:latest"] }];
+            instance.ensureEnvId.mockResolvedValue(1);
+            instance.auth.axiosInstance.get.mockResolvedValue({ data: mockImages });
+            
+            const result = await instance.getImages(undefined);
+            
+            expect(instance.ensureEnvId).toHaveBeenCalled();
+            expect(result).toEqual(mockImages);
+        });
+
         it("should reject invalid environmentId types", async () => {
             const result1 = await instance.getImages("invalid" as any);
             const result2 = await instance.getImages(NaN as any);

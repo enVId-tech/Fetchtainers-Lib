@@ -128,6 +128,66 @@ describe("PortainerFactory Tests", () => {
         });
 
         describe("Default Values", () => {
+            it("should accept undefined for optional maxRetryCount parameter", async () => {
+                mockPortainerClient.ensureEnvId.mockResolvedValue(1);
+                vi.mocked(utils.getStackByName).mockResolvedValue(null);
+                vi.mocked(utils.verifyStackCreation).mockResolvedValue(true);
+                mockPortainerClient.auth.axiosInstance.post.mockResolvedValue({ 
+                    data: { Id: 1, Name: "test-stack" } 
+                });
+
+                const stackData = { Name: "test-stack", ComposeFile: "version: '3'" };
+                const result = await factory.createStack(stackData, undefined);
+
+                expect(result).toBeDefined();
+                expect(mockPortainerClient.auth.axiosInstance.post).toHaveBeenCalled();
+            });
+
+            it("should accept null for optional maxRetryCount parameter", async () => {
+                mockPortainerClient.ensureEnvId.mockResolvedValue(1);
+                vi.mocked(utils.getStackByName).mockResolvedValue(null);
+                vi.mocked(utils.verifyStackCreation).mockResolvedValue(true);
+                mockPortainerClient.auth.axiosInstance.post.mockResolvedValue({ 
+                    data: { Id: 1, Name: "test-stack" } 
+                });
+
+                const stackData = { Name: "test-stack", ComposeFile: "version: '3'" };
+                const result = await factory.createStack(stackData, null as any);
+
+                expect(result).toBeDefined();
+                expect(mockPortainerClient.auth.axiosInstance.post).toHaveBeenCalled();
+            });
+
+            it("should accept undefined for optional timeoutMs parameter", async () => {
+                mockPortainerClient.ensureEnvId.mockResolvedValue(1);
+                vi.mocked(utils.getStackByName).mockResolvedValue(null);
+                vi.mocked(utils.verifyStackCreation).mockResolvedValue(true);
+                mockPortainerClient.auth.axiosInstance.post.mockResolvedValue({ 
+                    data: { Id: 1, Name: "test-stack" } 
+                });
+
+                const stackData = { Name: "test-stack", ComposeFile: "version: '3'" };
+                const result = await factory.createStack(stackData, 3, undefined);
+
+                expect(result).toBeDefined();
+                expect(utils.verifyStackCreation).toHaveBeenCalled();
+            });
+
+            it("should accept null for optional timeoutMs parameter", async () => {
+                mockPortainerClient.ensureEnvId.mockResolvedValue(1);
+                vi.mocked(utils.getStackByName).mockResolvedValue(null);
+                vi.mocked(utils.verifyStackCreation).mockResolvedValue(true);
+                mockPortainerClient.auth.axiosInstance.post.mockResolvedValue({ 
+                    data: { Id: 1, Name: "test-stack" } 
+                });
+
+                const stackData = { Name: "test-stack", ComposeFile: "version: '3'" };
+                const result = await factory.createStack(stackData, 3, null as any);
+
+                expect(result).toBeDefined();
+                expect(utils.verifyStackCreation).toHaveBeenCalled();
+            });
+
             it("should use default maxRetryCount of 3", async () => {
                 mockPortainerClient.ensureEnvId.mockResolvedValue(1);
                 vi.mocked(utils.getStackByName).mockResolvedValue(null);
@@ -322,6 +382,66 @@ describe("PortainerFactory Tests", () => {
         });
 
         describe("Default Values", () => {
+            it("should accept undefined for optional maxRetryCount parameter", async () => {
+                mockPortainerClient.ensureEnvId.mockResolvedValue(1);
+                mockPortainerClient.cleanupExistingContainer.mockResolvedValue(false);
+                vi.mocked(utils.verifyContainerCreation).mockResolvedValue(true);
+                mockPortainerClient.auth.axiosInstance.post
+                    .mockResolvedValueOnce({ data: { Id: "abc123" } })
+                    .mockResolvedValueOnce({ data: {} });
+
+                const stackData = { Name: "TestContainer", ContainerPayload: { Image: "nginx" } };
+                const result = await factory.createContainer(stackData, undefined);
+
+                expect(result).toBeDefined();
+                expect(mockPortainerClient.auth.axiosInstance.post).toHaveBeenCalled();
+            });
+
+            it("should accept null for optional maxRetryCount parameter", async () => {
+                mockPortainerClient.ensureEnvId.mockResolvedValue(1);
+                mockPortainerClient.cleanupExistingContainer.mockResolvedValue(false);
+                vi.mocked(utils.verifyContainerCreation).mockResolvedValue(true);
+                mockPortainerClient.auth.axiosInstance.post
+                    .mockResolvedValueOnce({ data: { Id: "abc123" } })
+                    .mockResolvedValueOnce({ data: {} });
+
+                const stackData = { Name: "TestContainer", ContainerPayload: { Image: "nginx" } };
+                const result = await factory.createContainer(stackData, null as any);
+
+                expect(result).toBeDefined();
+                expect(mockPortainerClient.auth.axiosInstance.post).toHaveBeenCalled();
+            });
+
+            it("should accept undefined for optional timeoutMs parameter", async () => {
+                mockPortainerClient.ensureEnvId.mockResolvedValue(1);
+                mockPortainerClient.cleanupExistingContainer.mockResolvedValue(false);
+                vi.mocked(utils.verifyContainerCreation).mockResolvedValue(true);
+                mockPortainerClient.auth.axiosInstance.post
+                    .mockResolvedValueOnce({ data: { Id: "abc123" } })
+                    .mockResolvedValueOnce({ data: {} });
+
+                const stackData = { Name: "TestContainer", ContainerPayload: { Image: "nginx" } };
+                const result = await factory.createContainer(stackData, 3, undefined);
+
+                expect(result).toBeDefined();
+                expect(utils.verifyContainerCreation).toHaveBeenCalled();
+            });
+
+            it("should accept null for optional timeoutMs parameter", async () => {
+                mockPortainerClient.ensureEnvId.mockResolvedValue(1);
+                mockPortainerClient.cleanupExistingContainer.mockResolvedValue(false);
+                vi.mocked(utils.verifyContainerCreation).mockResolvedValue(true);
+                mockPortainerClient.auth.axiosInstance.post
+                    .mockResolvedValueOnce({ data: { Id: "abc123" } })
+                    .mockResolvedValueOnce({ data: {} });
+
+                const stackData = { Name: "TestContainer", ContainerPayload: { Image: "nginx" } };
+                const result = await factory.createContainer(stackData, 3, null as any);
+
+                expect(result).toBeDefined();
+                expect(utils.verifyContainerCreation).toHaveBeenCalled();
+            });
+
             it("should use default maxRetryCount of 3", async () => {
                 mockPortainerClient.ensureEnvId.mockResolvedValue(1);
                 mockPortainerClient.cleanupExistingContainer.mockResolvedValue(false);

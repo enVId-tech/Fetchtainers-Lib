@@ -22,6 +22,17 @@ describe("Stack Controls Mixin Tests", () => {
     });
 
     describe("startStack()", () => {
+        it("should accept undefined for optional environmentId parameter", async () => {
+            instance.ensureEnvId.mockResolvedValue(1);
+            instance.auth.axiosInstance.post.mockResolvedValue({ data: { success: true } });
+            
+            const result = await instance.startStack(123, undefined);
+            
+            expect(instance.ensureEnvId).toHaveBeenCalled();
+            expect(result).toBe(true);
+            expect(instance.auth.axiosInstance.post).toHaveBeenCalledWith("/api/stacks/123/start?endpointId=1");
+        });
+
         it("should handle undefined environment IDs gracefully", async () => {
             instance.ensureEnvId.mockResolvedValue(null);
             
@@ -77,6 +88,17 @@ describe("Stack Controls Mixin Tests", () => {
     });
 
     describe("stopStack()", () => {
+        it("should accept undefined for optional environmentId parameter", async () => {
+            instance.ensureEnvId.mockResolvedValue(1);
+            instance.auth.axiosInstance.post.mockResolvedValue({ data: { success: true } });
+            
+            const result = await instance.stopStack(123, undefined);
+            
+            expect(instance.ensureEnvId).toHaveBeenCalled();
+            expect(result).toBe(true);
+            expect(instance.auth.axiosInstance.post).toHaveBeenCalledWith("/api/stacks/123/stop?endpointId=1");
+        });
+
         it("should handle undefined environment IDs gracefully", async () => {
             instance.ensureEnvId.mockResolvedValue(null);
             

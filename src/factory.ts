@@ -39,12 +39,12 @@ export class PortainerFactory {
             return undefined;
         }
 
-        if (maxRetryCount !== undefined && (typeof maxRetryCount !== 'number' || isNaN(maxRetryCount))) {
+        if (maxRetryCount !== undefined && maxRetryCount !== null && (typeof maxRetryCount !== 'number' || isNaN(maxRetryCount))) {
             logError('Invalid maxRetryCount: must be a number');
             return undefined;
         }
 
-        if (timeoutMs !== undefined && (typeof timeoutMs !== 'number' || isNaN(timeoutMs))) {
+        if (timeoutMs !== undefined && timeoutMs !== null && (typeof timeoutMs !== 'number' || isNaN(timeoutMs))) {
             logError('Invalid timeoutMs: must be a number');
             return undefined;
         }
@@ -133,18 +133,18 @@ export class PortainerFactory {
      * @param timeoutMs - Optional: Time between each retry attempt (in ms)
      * @returns {Promise<Record<string, unknown>> | undefined} - A promise that resolves to the created container object or undefined on failure.
      */
-    async createContainer(stackData: Record<string, unknown>, maxRetryCount?: number, timeoutMs?: number): Promise<Record<string, unknown> | undefined> {
+    async createContainer(stackData: Record<string, unknown>, maxRetryCount?: number, timeoutMs: number = 5000): Promise<Record<string, unknown> | undefined> {
         if (!stackData || typeof stackData !== 'object' || Array.isArray(stackData)) {
             logError('Invalid stackData: must be a non-null object');
             return undefined;
         }
 
-        if (maxRetryCount !== undefined && (typeof maxRetryCount !== 'number' || isNaN(maxRetryCount))) {
+        if (maxRetryCount !== undefined && maxRetryCount !== null && (typeof maxRetryCount !== 'number' || isNaN(maxRetryCount))) {
             logError('Invalid maxRetryCount: must be a number');
             return undefined;
         }
 
-        if (timeoutMs !== undefined && (typeof timeoutMs !== 'number' || isNaN(timeoutMs))) {
+        if (timeoutMs !== undefined && timeoutMs !== null && (typeof timeoutMs !== 'number' || isNaN(timeoutMs))) {
             logError('Invalid timeoutMs: must be a number');
             return undefined;
         }
