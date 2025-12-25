@@ -2,6 +2,10 @@ import { PortainerApi } from "./api.ts";
 import type { PortainerContainer } from "./types.ts";
 import { logInfo, logWarn, logError } from "../logger.ts";
 
+/**
+ * Get the first available environment ID
+ * @returns {Promise<number | null>} - Promise resolving to the first environment ID or null if none found
+ */
 export async function getFirstEnvironmentId(): Promise<number | null> {
     try {
         const environments = await PortainerApi.instance.getEnvironments();
@@ -19,13 +23,18 @@ export async function getFirstEnvironmentId(): Promise<number | null> {
 /**
  * Get a container by specific details
  * @param criteria - The search criteria (image name, label, etc.)
- * @returns Promise resolving to the container object or null if not found
+ * @returns {Promise<PortainerContainer | null>} - Promise resolving to the container object or null if not found
  */
 export async function getContainerByDetails(
     criteria: { image?: string; label?: string }
 ): Promise<PortainerContainer | null> {
     if (!criteria.image && !criteria.label) {
         logError('At least one search criteria (image or label) must be provided.');
+        return null;
+    }
+
+    if (typeof criteria.image !== 'string' || typeof criteria.label !== 'string') {
+        logError('Search criteria must be of type string.');
         return null;
     }
 
@@ -57,16 +66,24 @@ export async function getContainerByDetails(
 /**
  * Get a stack by name
  * @param stackName - The name of the stack to find
- * @returns Promise resolving to the stack object or null if not found
+ * @returns {Promise<any | null>} - Promise resolving to the stack object or null if not found
  */
 export async function getStackByName(stackName: string): Promise<any | null> {
     try {
+        if (!stackName || typeof stackName !== 'string') {
+            logError('Invalid stackName: must be a non-empty string');
+            return null;
+        }
+
         const stacks = await PortainerApi.instance.getStacks();
+
         if (!stacks) {
             logError('No stacks found in the specified environment.');
             return null;
         }
+
         const stack = stacks.find((s: any) => s.Name === stackName);
+
         return stack || null;
     } catch (error) {
         logError(`Failed to get stack by name "${stackName}":`, error);
@@ -74,8 +91,24 @@ export async function getStackByName(stackName: string): Promise<any | null> {
     }
 }
 
+/**
+ * Get a stack by ID
+ * @param stackid - The ID of the stack to find
+ * @param environmentId - The ID of the Portainer environment
+ * @returns {Promise<any | null>} - Promise resolving to the stack object or null if not found
+ */
 export async function getStackById(stackid: number, environmentId: number): Promise<any | null> {
     try {
+        if (typeof stackid !== 'number' || isNaN(stackid) || stackid <= 0) {
+            logError('Invalid stackid: must be a positive number');
+            return null;
+        }
+
+        if (typeof environmentId !== 'number' || isNaN(environmentId) || environmentId <= 0) {
+            logError('Invalid environmentId: must be a positive number');
+            return null;
+        }
+
         const stacks = await PortainerApi.instance.getStacks();
         if (!stacks) {
             logError('No stacks found in the specified environment.');
@@ -93,9 +126,21 @@ export async function getStackById(stackid: number, environmentId: number): Prom
  * Verify that a stack was created successfully
  * @param stackName - The name of the stack to verify
  * @param timeoutMs - Timeout in milliseconds (default: 5000)
- * @returns Promise resolving to true if stack exists
+ * @returns {Promise<boolean>} - Promise resolving to true if stack exists
  */
 export async function verifyStackCreation(stackName: string, timeoutMs: number = 5000): Promise<boolean> {
+    if (!stackName || typeof stackName !== 'string') {
+        logError('Invalid stackName: must be a non-empty string');
+        return false;
+    }
+
+    if (isNaN(timeoutMs) || Math.floor(timeoutMs) < 0) {
+        logWarn("timeoutMs is an invalid number, setting it to default value of 5000 ms.");
+        timeoutMs = 5000;
+    } else {
+        timeoutMs = Math.floor(timeoutMs);
+    }
+
     const startTime = Date.now();
 
     while (Date.now() - startTime < timeoutMs) {
@@ -120,9 +165,21 @@ export async function verifyStackCreation(stackName: string, timeoutMs: number =
  * Verify that a container was created successfully
  * @param containerName - The name of the container to verify
  * @param timeoutMs - Timeout in milliseconds (default: 5000)
- * @returns Promise resolving to true if container exists
+ * @returns {Promise<boolean>} - Promise resolving to true if container exists
  */
 export async function verifyContainerCreation(containerName: string, timeoutMs: number = 5000): Promise<boolean> {
+    if (!containerName || typeof containerName !== 'string') {
+        logError('Invalid containerName: must be a non-empty string');
+        return false;
+    }
+
+    if (isNaN(timeoutMs) || Math.floor(timeoutMs) < 0) {
+        logWarn("timeoutMs is an invalid number, setting it to default value of 5000 ms.");
+        timeoutMs = 5000;
+    } else {
+        timeoutMs = Math.floor(timeoutMs);
+    }
+
     const startTime = Date.now();
 
     while (Date.now() - startTime < timeoutMs) {

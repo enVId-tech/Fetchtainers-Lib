@@ -87,6 +87,9 @@ export class PortainerAuth {
         return PortainerAuth.instance;
     }
 
+    /**
+     * Updates the Axios instance headers with the current API key.
+     */
     private updateAuthHeaders() {
         this.axiosInstance.defaults.headers['X-API-Key'] = this.apiKey;
         this.isValidated = true;
