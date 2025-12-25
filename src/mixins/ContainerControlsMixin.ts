@@ -53,6 +53,7 @@ export function ContainerControlsMixin<TBase extends Constructor<CCtrlMixin>>(Ba
                             const url = `/api/endpoints/${controls.environmentId}/docker/containers/${controls.containerId}?${params.toString()}`;
                             await this.auth.axiosInstance.delete(url);
                             logInfo('Container removed successfully');
+                            break;
                         }
                     case 'kill':
                         {
@@ -60,18 +61,21 @@ export function ContainerControlsMixin<TBase extends Constructor<CCtrlMixin>>(Ba
                             logInfo(`Killing container ${controls.containerId} with signal ${signal}...`);
                             await this.auth.axiosInstance.post(`/api/endpoints/${controls.environmentId}/docker/containers/${controls.containerId}/kill?signal=${signal}`);
                             logInfo('Container killed successfully');
+                            break;
                         }
                     case 'pause':
                         {
                             logInfo(`Pausing container ${controls.containerId}...`);
                             await this.auth.axiosInstance.post(`/api/endpoints/${controls.environmentId}/docker/containers/${controls.containerId}/pause`);
                             logInfo('Container paused successfully');
+                            break;
                         }
                     case 'unpause':
                         {
                             logInfo(`Unpausing container ${controls.containerId}...`);
                             await this.auth.axiosInstance.post(`/api/endpoints/${controls.environmentId}/docker/containers/${controls.containerId}/unpause`);
                             logInfo('Container unpaused successfully');
+                            break;
                         }
                     case 'restart':
                         {
@@ -79,6 +83,7 @@ export function ContainerControlsMixin<TBase extends Constructor<CCtrlMixin>>(Ba
                             logInfo(`Restarting container ${controls.containerId}...`);
                             await this.auth.axiosInstance.post(`/api/endpoints/${controls.environmentId}/docker/containers/${controls.containerId}/restart?t=${(timeout / 1000).toPrecision(2)}`);
                             logInfo('Container restarted successfully');
+                            break;
                         }
                 }
                 return true;

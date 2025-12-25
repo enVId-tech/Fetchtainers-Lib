@@ -45,8 +45,12 @@ export function StackControlsMixin<TBase extends Constructor<SCtrlsMixin>>(Base:
          * @returns {Promise<boolean>} Promise resolving when stack is stopped
          */
         async stopStack(stackId: number, environmentId?: number | null): Promise<boolean> {
+            if (environmentId === null || environmentId === undefined) {
+                environmentId = await this.ensureEnvId();
+            }
+
             if (environmentId === null) {
-                logError('Environment ID is required to stop a stack.');
+                logError('No Portainer environments found. Cannot stop stack.');
                 return false;
             }
 

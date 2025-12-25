@@ -34,7 +34,8 @@ export class PortainerFactory {
      * @returns {Promise<Record<string, unknown>>} A promise that resolves to the created stack object or an empty object on failure.
      */
     public async createStack(stackData: Record<string, unknown>, maxRetryCount?: number, timeoutMs?: number): Promise<Record<string, unknown>> {
-        if (this.portainerClient.ensureEnvId() === null) {
+        const envCheck = await this.portainerClient.ensureEnvId();
+        if (envCheck === null) {
             throw new Error('Environment ID is required to create a stack.');
         }
 
@@ -72,7 +73,7 @@ export class PortainerFactory {
         const envId: number | null = await this.portainerClient.ensureEnvId();
 
         // If no env id, return an error
-        if (!envId && typeof envId !== "number") {
+        if (envId === null || typeof envId !== "number") {
             throw new Error("Environment ID is undefined or the wrong type when creating a stack.")
         }
 
