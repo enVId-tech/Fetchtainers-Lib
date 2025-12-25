@@ -17,34 +17,6 @@ export async function getFirstEnvironmentId(): Promise<number | null> {
 }
 
 /**
- * Get a container by name
- * @param containerName - The name of the container to find
- * @param environmentId - The ID of the Portainer environment
- * @returns Promise resolving to the container object or null if not found
- */
-export async function getContainerByName(containerName: string): Promise<PortainerContainer | null> {
-    try {
-        const containers = await PortainerApi.instance.getContainers(true);
-
-        if (!containers) {
-            logError('No containers found in the specified environment.');
-            return null;
-        }
-
-        const container = containers.find(c =>
-            c.Names.some(name => name.includes(containerName)) ||
-            c.Names.some(name => name === `/${containerName}`) ||
-            c.Names.some(name => name.replace('/', '') === containerName)
-        );
-
-        return container || null;
-    } catch (error) {
-        logError(`Failed to get container by name "${containerName}":`, error);
-        return null;
-    }
-}
-
-/**
  * Get a container by specific details
  * @param criteria - The search criteria (image name, label, etc.)
  * @returns Promise resolving to the container object or null if not found
@@ -155,7 +127,7 @@ export async function verifyContainerCreation(containerName: string, timeoutMs: 
 
     while (Date.now() - startTime < timeoutMs) {
         try {
-            const container = await getContainerByName(containerName);
+            const container = await PortainerApi.getInstance().getContainerDetails(containerName);
 
             if (container) {
                 logInfo(`Container "${containerName}" verified successfully (State: ${container.State})`);

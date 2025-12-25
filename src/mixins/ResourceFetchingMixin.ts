@@ -52,6 +52,20 @@ export function ResourceFetchingMixin<TBase extends Constructor<RFMixin>>(Base: 
         }
 
         /**
+         * Fetches the overall system status of the Portainer instance.
+         * @returns {Promise<any | undefined>} A promise that resolves to the system status object.
+         */
+        async getStatus(): Promise<any | undefined> {
+            try {
+                const response = await this.auth.axiosInstance.get('/api/system/status');
+                return response.data;
+            } catch (error) {
+                logError('Failed to fetch system status:', error);
+                return undefined;
+            }
+        }
+
+        /**
          * Fetches detailed information about a specific container within a Portainer environment.
          * @param containerId - The ID of the container to fetch details for.
          * @param environmentId - Optional: The ID of the Portainer environment, uses the set environmentId by default
@@ -127,16 +141,5 @@ export function ResourceFetchingMixin<TBase extends Constructor<RFMixin>>(Base: 
                 return undefined;
             }
         }
-
-        async getStatus(): Promise<any | undefined> {
-            try {
-                const response = await this.auth.axiosInstance.get('/api/system/status');
-                return response.data;
-            } catch (error) {
-                logError('Failed to fetch system status:', error);
-                return undefined;
-            }
-        }
-
     }
 }
