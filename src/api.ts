@@ -2,7 +2,6 @@ import { PortainerAuth } from './auth.ts';
 import { EnvironmentsMixin } from './mixins/EnvironmentMixins.ts';
 import { ResourceFetchingMixin } from './mixins/ResourceFetchingMixin.ts';
 import { ResourceDeletionMixin } from './mixins/ResourceDeletionMixin.ts';
-import { ContainerControlsMixin } from './mixins/ContainerControlsMixin.ts';
 import { StackControlsMixin } from './mixins/StackControlsMixin.ts';
 
 class PortainerApiBase {
@@ -16,20 +15,18 @@ class PortainerApiBase {
     }
 }
 
-const MixinStack = StackControlsMixin(
-    ContainerControlsMixin(
-        ResourceDeletionMixin(
-            ResourceFetchingMixin(
-                EnvironmentsMixin(
-                    PortainerApiBase
-                )
+const ApiStack = StackControlsMixin(
+    ResourceDeletionMixin(
+        ResourceFetchingMixin(
+            EnvironmentsMixin(
+                PortainerApiBase
             )
         )
     )
 )
 
 // Maintain singleton instance
-class PortainerApi extends MixinStack {
+class PortainerApi extends ApiStack {
     public static instance: PortainerApi;
     private constructor(
         environmentId: number | null = null
