@@ -180,6 +180,48 @@ export function ResourceFetchingMixin<TBase extends Constructor<RFMixin>>(Base: 
         }
 
         /**
+         * Get container statistics (CPU, memory usage, network I/O)
+         * @param containerId - The ID of the container
+         * @param environmentId - The ID of the Portainer environment
+         * @returns Promise resolving to container statistics
+         */
+        async getContainerStats(containerId: string, environmentId?: number | null): Promise<{
+            memory_stats: { usage: number; limit: number };
+            cpu_stats: { cpu_usage: { total_usage: number }; system_cpu_usage: number; online_cpus?: number };
+            precpu_stats: { cpu_usage: { total_usage: number }; system_cpu_usage: number };
+            networks: Record<string, { rx_bytes: number; tx_bytes: number }>;
+        } | null> {
+            if (!containerId || typeof containerId !== 'string') {
+                logError('Invalid containerId: must be a non-empty string');
+                return null;
+            }
+
+            if (!this.auth.isValidated) {
+                logError('Authentication is not validated. Cannot fetch container stats.');
+                return null;
+            }
+
+            if (environmentId === null || environmentId === undefined) {
+                environmentId = await this.ensureEnvId();
+            }
+
+            if (environmentId === null) {
+                logError('No Portainer environments found. Cannot fetch container stats.');
+                return null;
+            }
+
+            try {
+                const response = await this.auth.axiosInstance.get(
+                    `/api/endpoints/${environmentId}/docker/containers/${containerId}/stats?stream=false`
+                );
+                return response.data;
+            } catch (error) {
+                logError(`Failed to get container stats for ${containerId}:`, error);
+                return null;
+            }
+        }
+
+        /**
          * Fetches a list of all Docker images within a specific Portainer environment.
          * This proxies the Docker API's /images/json endpoint.
          * @param environmentId - Optional: The ID of the Portainer environment.
