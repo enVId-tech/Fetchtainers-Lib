@@ -1,6 +1,6 @@
 {
   "name": "writetainer-lib",
-  "version": "1.0.0",
+  "version": "25.12.27-dev.0",
   "description": "a portainer api accessibility library",
   "homepage": "https://github.com/enVId-tech/Writetainer-Lib#readme",
   "bugs": {
